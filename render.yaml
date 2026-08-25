@@ -1,18 +1,16 @@
-# render.yaml
-# Configuración para desplegar el frontend en Render
-
+# render.yaml - Versión Node (sin Docker)
 services:
-  # Servicio del Frontend
   - type: web
     name: jean-informatico-restaurante-frontend
-    runtime: docker
+    runtime: node
     repo: https://github.com/jeffersonm-dev/Jean-informatico-Restaurante-Frontend
     plan: free
+    branch: main
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --port 5173
+    healthCheckPath: /
+    autoDeploy: true
     
-    # Dockerfile en la raíz del proyecto
-    dockerfilePath: ./Dockerfile
-    
-    # Variables de entorno
     envVars:
       - key: VITE_API_URL
         value: https://restaurante-api-uam4.onrender.com/api
@@ -20,20 +18,3 @@ services:
         value: Jean Informático Restaurante
       - key: VITE_NODE_ENV
         value: production
-    
-    # Health Check
-    healthCheckPath: /
-    
-    # Auto deploy al hacer push a main
-    autoDeploy: true
-    
-    # Puerto que expone el contenedor
-    ports:
-      - port: 80
-        protocol: http
-    
-    # Build command (opcional si usas Docker)
-    buildCommand: npm run build
-    
-    # Publish directory
-    publishDir: dist
