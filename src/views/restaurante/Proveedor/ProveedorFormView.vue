@@ -33,11 +33,12 @@
           <div class="row">
             <div class="col-md-6">
               <div class="field-group">
-                <label>
+                <label for="nombre">
                   <i class="bi bi-building"></i>
                   Nombre <span class="required">*</span>
                 </label>
                 <input 
+                  id="nombre"
                   type="text" 
                   v-model="form.nombre" 
                   placeholder="Nombre del proveedor"
@@ -52,11 +53,12 @@
             </div>
             <div class="col-md-6">
               <div class="field-group">
-                <label>
+                <label for="razonSocial">
                   <i class="bi bi-card-text"></i>
                   Razón Social
                 </label>
                 <input 
+                  id="razonSocial"
                   type="text" 
                   v-model="form.razon_social" 
                   placeholder="Razón social del proveedor"
@@ -67,35 +69,82 @@
             </div>
           </div>
 
+          <!-- RIF con SELECT y FORMATO AUTOMÁTICO -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="field-group">
+                <label for="tipoRif">
+                  <i class="bi bi-person-badge"></i>
+                  Tipo de RIF <span class="required">*</span>
+                </label>
+                <div class="rif-select-group">
+                  <select 
+                    id="tipoRif"
+                    v-model="form.tipo_rif" 
+                    class="form-control rif-tipo-select"
+                    :class="{ 'error': errors.ruc }"
+                    @change="onTipoRifChange"
+                    aria-describedby="rif-help"
+                  >
+                    <option value="">Selecciona tipo</option>
+                    <option value="V">V - Persona Natural Venezolana</option>
+                    <option value="E">E - Persona Natural Extranjera</option>
+                    <option value="J">J - Persona Jurídica</option>
+                    <option value="G">G - Entidad Gubernamental</option>
+                    <option value="P">P - Titular de Pasaporte</option>
+                  </select>
+                </div>
+                <small class="help-text">Tipo de contribuyente según el SENIAT</small>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field-group">
+                <label for="rifNumero">
+                  <i class="bi bi-hash"></i>
+                  Número de RIF <span class="required">*</span>
+                </label>
+                <div class="rif-input-group">
+                  <span class="rif-prefix">{{ form.tipo_rif || '?' }}</span>
+                  <span class="rif-separator">-</span>
+                  <input 
+                    id="rifNumero"
+                    type="text" 
+                    v-model="form.rif_numero" 
+                    placeholder="12345678"
+                    class="form-control rif-numero-input"
+                    :class="{ 'error': errors.ruc, 'valid': rifValido && form.rif_numero }"
+                    @input="onRifNumeroInput"
+                    @blur="validateField('ruc')"
+                    maxlength="8"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    aria-describedby="rif-error rif-help"
+                  >
+                  <span class="rif-separator">-</span>
+                  <span class="rif-digito">{{ digitoVerificador || '?' }}</span>
+                </div>
+                <span id="rif-error" class="error-msg" v-if="errors.ruc" role="alert">
+                  <i class="bi bi-exclamation-circle"></i> {{ errors.ruc }}
+                </span>
+                <span id="rif-success" class="success-msg" v-else-if="rifValido && form.rif_numero" role="status">
+                  <i class="bi bi-check-circle-fill"></i> RIF válido: <strong>{{ rifFormateado }}</strong>
+                </span>
+                <small id="rif-help" class="help-text">
+                  Ingresa los 8 dígitos del RIF (ej: 12345678)
+                </small>
+              </div>
+            </div>
+          </div>
+
           <div class="row">
             <div class="col-md-4">
               <div class="field-group">
-                <label>
-                  <i class="bi bi-person-badge"></i>
-                  RIF <span class="required">*</span>
-                </label>
-                <input 
-                  type="text" 
-                  v-model="form.ruc" 
-                  placeholder="J-12345678-9"
-                  class="form-control"
-                  :class="{ 'error': errors.ruc }"
-                  @blur="validateField('ruc')"
-                  maxlength="14"
-                >
-                <span class="error-msg" v-if="errors.ruc">
-                  <i class="bi bi-exclamation-circle"></i> {{ errors.ruc }}
-                </span>
-                <small class="help-text">Formato: J-12345678-9, V-12345678-9 o E-12345678-9</small>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="field-group">
-                <label>
+                <label for="tipoPersona">
                   <i class="bi bi-people"></i>
                   Tipo de Persona <span class="required">*</span>
                 </label>
                 <select 
+                  id="tipoPersona"
                   v-model="form.tipo_persona" 
                   class="form-control"
                   :class="{ 'error': errors.tipo_persona }"
@@ -112,11 +161,11 @@
             </div>
             <div class="col-md-4">
               <div class="field-group">
-                <label>
+                <label for="terminosPago">
                   <i class="bi bi-tag"></i>
                   Términos de Pago
                 </label>
-                <select v-model="form.terminos_pago" class="form-control">
+                <select id="terminosPago" v-model="form.terminos_pago" class="form-control">
                   <option value="">Selecciona un término</option>
                   <option value="Contado">Contado</option>
                   <option value="15 días">15 días</option>
@@ -128,16 +177,14 @@
                 <small class="help-text">Condiciones de pago acordadas</small>
               </div>
             </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <div class="field-group">
-                <label>
+                <label for="diasCredito">
                   <i class="bi bi-calendar-check"></i>
                   Días de Crédito
                 </label>
                 <input 
+                  id="diasCredito"
                   type="number" 
                   v-model="form.dias_credito" 
                   placeholder="30"
@@ -145,10 +192,13 @@
                   min="0"
                   max="365"
                 >
-                <small class="help-text">Días de crédito otorgados (máx 365)</small>
+                <small class="help-text">Días de crédito otorgados</small>
               </div>
             </div>
-            <div class="col-md-6">
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
               <div class="field-group">
                 <label>
                   <i class="bi bi-star"></i>
@@ -183,11 +233,12 @@
           <div class="row">
             <div class="col-md-6">
               <div class="field-group">
-                <label>
+                <label for="telefono">
                   <i class="bi bi-telephone"></i>
                   Teléfono <span class="required">*</span>
                 </label>
                 <input 
+                  id="telefono"
                   type="text" 
                   v-model="form.telefono" 
                   placeholder="+58 412-1234567"
@@ -202,11 +253,12 @@
             </div>
             <div class="col-md-6">
               <div class="field-group">
-                <label>
+                <label for="telefonoAlternativo">
                   <i class="bi bi-telephone"></i>
                   Teléfono Alternativo
                 </label>
                 <input 
+                  id="telefonoAlternativo"
                   type="text" 
                   v-model="form.telefono_alternativo" 
                   placeholder="+58 412-7654321"
@@ -220,11 +272,12 @@
           <div class="row">
             <div class="col-md-6">
               <div class="field-group">
-                <label>
+                <label for="email">
                   <i class="bi bi-envelope"></i>
                   Email <span class="required">*</span>
                 </label>
                 <input 
+                  id="email"
                   type="email" 
                   v-model="form.email" 
                   placeholder="proveedor@empresa.com"
@@ -239,11 +292,12 @@
             </div>
             <div class="col-md-6">
               <div class="field-group">
-                <label>
+                <label for="emailAlternativo">
                   <i class="bi bi-envelope"></i>
                   Email Alternativo
                 </label>
                 <input 
+                  id="emailAlternativo"
                   type="email" 
                   v-model="form.email_alternativo" 
                   placeholder="contacto@empresa.com"
@@ -257,11 +311,12 @@
           <div class="row">
             <div class="col-md-12">
               <div class="field-group">
-                <label>
+                <label for="sitioWeb">
                   <i class="bi bi-globe2"></i>
                   Sitio Web
                 </label>
                 <input 
+                  id="sitioWeb"
                   type="url" 
                   v-model="form.sitio_web" 
                   placeholder="https://www.proveedor.com"
@@ -282,11 +337,12 @@
           <div class="row">
             <div class="col-md-4">
               <div class="field-group">
-                <label>
+                <label for="contactoNombre">
                   <i class="bi bi-person"></i>
                   Nombre
                 </label>
                 <input 
+                  id="contactoNombre"
                   type="text" 
                   v-model="form.contacto_nombre" 
                   placeholder="Nombre del contacto"
@@ -297,11 +353,12 @@
             </div>
             <div class="col-md-4">
               <div class="field-group">
-                <label>
+                <label for="contactoTelefono">
                   <i class="bi bi-telephone"></i>
                   Teléfono
                 </label>
                 <input 
+                  id="contactoTelefono"
                   type="text" 
                   v-model="form.contacto_telefono" 
                   placeholder="+58 412-1234567"
@@ -312,11 +369,12 @@
             </div>
             <div class="col-md-4">
               <div class="field-group">
-                <label>
+                <label for="contactoEmail">
                   <i class="bi bi-envelope"></i>
                   Email
                 </label>
                 <input 
+                  id="contactoEmail"
                   type="email" 
                   v-model="form.contacto_email" 
                   placeholder="contacto@empresa.com"
@@ -328,7 +386,7 @@
           </div>
         </div>
 
-        <!-- SECCIÓN: UBICACIÓN (Ciudad y Estado como SELECTS) -->
+        <!-- SECCIÓN: UBICACIÓN -->
         <div class="form-section">
           <h3 class="section-title">
             <i class="bi bi-geo-alt"></i>
@@ -337,11 +395,12 @@
           <div class="row">
             <div class="col-md-12">
               <div class="field-group">
-                <label>
+                <label for="direccion">
                   <i class="bi bi-map"></i>
                   Dirección
                 </label>
                 <input 
+                  id="direccion"
                   type="text" 
                   v-model="form.direccion" 
                   placeholder="Calle, número, edificio..."
@@ -354,11 +413,12 @@
           <div class="row">
             <div class="col-md-6">
               <div class="field-group">
-                <label>
+                <label for="ciudad">
                   <i class="bi bi-city"></i>
                   Ciudad <span class="required">*</span>
                 </label>
                 <select 
+                  id="ciudad"
                   v-model="form.ciudad" 
                   class="form-control"
                   :class="{ 'error': errors.ciudad }"
@@ -372,16 +432,16 @@
                 <span class="error-msg" v-if="errors.ciudad">
                   <i class="bi bi-exclamation-circle"></i> {{ errors.ciudad }}
                 </span>
-                <small class="help-text">Ciudad donde se encuentra el proveedor</small>
               </div>
             </div>
             <div class="col-md-6">
               <div class="field-group">
-                <label>
+                <label for="estado">
                   <i class="bi bi-geo-alt"></i>
                   Estado <span class="required">*</span>
                 </label>
                 <select 
+                  id="estado"
                   v-model="form.estado" 
                   class="form-control"
                   :class="{ 'error': errors.estado }"
@@ -395,7 +455,6 @@
                 <span class="error-msg" v-if="errors.estado">
                   <i class="bi bi-exclamation-circle"></i> {{ errors.estado }}
                 </span>
-                <small class="help-text">Estado donde se encuentra el proveedor</small>
               </div>
             </div>
           </div>
@@ -408,11 +467,12 @@
             Información Bancaria
           </h3>
           <div class="field-group">
-            <label>
+            <label for="cuentaBancaria">
               <i class="bi bi-credit-card"></i>
               Cuenta Bancaria
             </label>
             <input 
+              id="cuentaBancaria"
               type="text" 
               v-model="form.cuenta_bancaria" 
               placeholder="Número de cuenta bancaria"
@@ -455,7 +515,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ProveedoresAPI } from '@/services/api'
 import Swal from 'sweetalert2'
@@ -468,6 +528,8 @@ const router = useRouter()
 const loading = ref(false)
 const isEditing = ref(false)
 const hoverRating = ref(0)
+const rifValido = ref(false)
+const digitoVerificador = ref('?')
 
 // ===== LISTA DE ESTADOS DE VENEZUELA =====
 const estados = [
@@ -505,7 +567,7 @@ const ciudadesPorEstado = {
   'Distrito Capital': ['Caracas']
 }
 
-// ===== CIUDADES FILTRADAS POR ESTADO SELECCIONADO =====
+// ===== CIUDADES FILTRADAS =====
 const ciudadesFiltradas = computed(() => {
   if (!form.estado) return []
   return ciudadesPorEstado[form.estado] || []
@@ -515,6 +577,8 @@ const ciudadesFiltradas = computed(() => {
 const defaultForm = {
   nombre: '',
   ruc: '',
+  tipo_rif: '',      // V, E, J, G, P
+  rif_numero: '',    // 8 dígitos
   razon_social: '',
   tipo_persona: '',
   direccion: '',
@@ -537,6 +601,109 @@ const defaultForm = {
 
 const form = reactive({ ...defaultForm })
 
+// ===== RIF FORMATEADO =====
+const rifFormateado = computed(() => {
+  if (!form.tipo_rif || !form.rif_numero || form.rif_numero.length !== 8) {
+    return ''
+  }
+  const digito = digitoVerificador.value !== '?' ? digitoVerificador.value : 'X'
+  return `${form.tipo_rif}-${form.rif_numero}-${digito}`
+})
+
+// ===== ALGORITMO DEL RIF (Módulo 11) =====
+function calcularDigitoVerificador(numeros) {
+  if (!numeros || numeros.length !== 8) return '?'
+  
+  const base = [4, 3, 2, 7, 6, 5, 4, 3, 2]
+  let suma = 0
+  
+  for (let i = 0; i < 8; i++) {
+    const digito = parseInt(numeros[i] || 0)
+    suma += digito * base[i]
+  }
+  
+  const residuo = suma % 11
+  const digitoVerificadorCalc = 11 - residuo
+  
+  if (digitoVerificadorCalc === 11) return 0
+  if (digitoVerificadorCalc === 10) return 9
+  return digitoVerificadorCalc
+}
+
+function validarRIF() {
+  const tipo = form.tipo_rif
+  const numero = form.rif_numero
+  
+  if (!tipo) {
+    rifValido.value = false
+    errors.ruc = 'Selecciona un tipo de RIF'
+    return false
+  }
+  
+  if (!numero || numero.length !== 8) {
+    rifValido.value = false
+    errors.ruc = 'Ingresa los 8 dígitos del RIF'
+    return false
+  }
+  
+  if (!/^\d{8}$/.test(numero)) {
+    rifValido.value = false
+    errors.ruc = 'Solo se permiten números (8 dígitos)'
+    return false
+  }
+  
+  const digito = calcularDigitoVerificador(numero)
+  digitoVerificador.value = digito
+  
+  rifValido.value = true
+  errors.ruc = ''
+  return true
+}
+
+// ===== EVENTOS DEL RIF =====
+function onTipoRifChange() {
+  if (form.rif_numero && form.rif_numero.length === 8) {
+    validarRIF()
+  }
+  // Actualizar el RUC completo
+  actualizarRUC()
+}
+
+function onRifNumeroInput(event) {
+  // Solo permitir números
+  let value = event.target.value.replace(/\D/g, '')
+  if (value.length > 8) value = value.substring(0, 8)
+  form.rif_numero = value
+  event.target.value = value
+  
+  if (value.length === 8 && form.tipo_rif) {
+    validarRIF()
+  } else {
+    rifValido.value = false
+    digitoVerificador.value = '?'
+    if (value.length > 0) {
+      errors.ruc = `Faltan ${8 - value.length} dígito(s)`
+    } else {
+      errors.ruc = ''
+    }
+  }
+  
+  actualizarRUC()
+}
+
+function actualizarRUC() {
+  if (form.tipo_rif && form.rif_numero && form.rif_numero.length === 8) {
+    const digito = digitoVerificador.value !== '?' ? digitoVerificador.value : '0'
+    form.ruc = `${form.tipo_rif}${form.rif_numero}${digito}`
+  } else if (form.tipo_rif && form.rif_numero) {
+    form.ruc = `${form.tipo_rif}${form.rif_numero}`
+  } else if (form.tipo_rif) {
+    form.ruc = form.tipo_rif
+  } else {
+    form.ruc = ''
+  }
+}
+
 // ===== ERRORS =====
 const errors = reactive({
   nombre: '',
@@ -557,9 +724,9 @@ const validations = {
   },
   ruc: (val) => {
     if (!val?.trim()) return 'El RIF es obligatorio'
-    // Formato Venezuela: J-12345678-9, V-12345678-9, E-12345678-9
-    if (!/^[JVE]-?\d{8,10}-?\d{1}$/i.test(val.trim())) {
-      return 'Formato inválido (Ej: J-12345678-9)'
+    // Validar formato completo
+    if (!/^[JVE]\d{9}$/.test(val.trim())) {
+      return 'RIF inválido (ej: J123456789)'
     }
     return ''
   },
@@ -575,7 +742,7 @@ const validations = {
   email: (val) => {
     if (!val?.trim()) return 'El email es obligatorio'
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())) {
-      return 'Email inválido (Ej: proveedor@empresa.com)'
+      return 'Email inválido (ej: proveedor@empresa.com)'
     }
     return ''
   },
@@ -590,16 +757,35 @@ const validations = {
 }
 
 function validateField(field) {
+  if (field === 'ruc') {
+    // Primero validamos el RIF con nuestro validador
+    if (!validarRIF()) {
+      // Si el validador ya puso un error, no sobrescribir
+      if (!errors.ruc) {
+        errors.ruc = validations.ruc(form.ruc)
+      }
+    }
+    return
+  }
   const validator = validations[field]
   if (validator) errors[field] = validator(form[field])
 }
 
 function validateAll() {
   let isValid = true
+  
+  // Validar RIF primero
+  if (!validarRIF()) {
+    isValid = false
+  }
+  
+  // Validar el resto
   for (const field of Object.keys(validations)) {
+    if (field === 'ruc') continue
     validateField(field)
     if (errors[field]) isValid = false
   }
+  
   return isValid
 }
 
@@ -617,6 +803,19 @@ async function loadItem(id) {
     const data = res.data
     Object.assign(form, data)
     isEditing.value = true
+    
+    // Si tiene RUC, extraer tipo y número
+    if (form.ruc) {
+      const rucLimpio = form.ruc.replace(/[-\s]/g, '').toUpperCase()
+      if (rucLimpio.length >= 9) {
+        form.tipo_rif = rucLimpio[0]
+        form.rif_numero = rucLimpio.substring(1, 9)
+        // Calcular dígito verificador
+        const digito = calcularDigitoVerificador(form.rif_numero)
+        digitoVerificador.value = digito
+        rifValido.value = true
+      }
+    }
   } catch (error) {
     Swal.fire('Error', 'No se pudo cargar el proveedor', 'error')
     router.push('/proveedores')
@@ -696,6 +895,14 @@ async function handleSubmit() {
 function cancelar() {
   router.push('/proveedores')
 }
+
+// ===== WATCH =====
+watch(() => form.tipo_rif, () => {
+  if (form.rif_numero && form.rif_numero.length === 8) {
+    validarRIF()
+  }
+  actualizarRUC()
+})
 
 // ===== LIFECYCLE =====
 onMounted(async () => {
@@ -876,6 +1083,15 @@ onMounted(async () => {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
 }
 
+.form-control.valid {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.form-control.valid:focus {
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.08);
+}
+
 select.form-control {
   appearance: auto;
   cursor: pointer;
@@ -894,6 +1110,19 @@ select.form-control {
   font-size: 14px;
 }
 
+.success-msg {
+  color: #22c55e;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.success-msg i {
+  font-size: 14px;
+}
+
 .help-text {
   color: #9ca3af;
   font-size: 12px;
@@ -902,6 +1131,94 @@ select.form-control {
   gap: 4px;
   margin-top: 4px;
   font-style: italic;
+}
+
+/* ============================================
+   RIF INPUT GROUP
+   ============================================ */
+.rif-select-group {
+  display: flex;
+  gap: 8px;
+}
+
+.rif-select-group .rif-tipo-select {
+  flex: 1;
+}
+
+.rif-input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 4px;
+  transition: all 0.2s ease;
+}
+
+.rif-input-group:focus-within {
+  border-color: #2F6FED;
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.08);
+}
+
+.rif-input-group .rif-prefix {
+  font-weight: 700;
+  font-size: 16px;
+  color: #2F6FED;
+  padding: 8px 4px 8px 8px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.rif-input-group .rif-separator {
+  color: #9ca3af;
+  font-weight: 300;
+  font-size: 18px;
+}
+
+.rif-input-group .rif-digito {
+  font-weight: 700;
+  font-size: 16px;
+  color: #22c55e;
+  padding: 8px 8px 8px 4px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.rif-input-group .rif-numero-input {
+  border: none;
+  padding: 8px 4px;
+  font-size: 16px;
+  font-family: 'Courier New', monospace;
+  background: transparent;
+  width: 100%;
+  min-width: 120px;
+  letter-spacing: 2px;
+}
+
+.rif-input-group .rif-numero-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.rif-input-group .rif-numero-input.error {
+  background: transparent;
+}
+
+.rif-input-group.error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.rif-input-group.error:focus-within {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+}
+
+.rif-input-group .rif-numero-input::placeholder {
+  letter-spacing: 0;
+  font-family: inherit;
+  font-size: 14px;
+  color: #9ca3af;
 }
 
 /* ============================================
@@ -1083,6 +1400,15 @@ select.form-control {
   .star-rating {
     font-size: 24px;
   }
+
+  .rif-input-group {
+    flex-wrap: wrap;
+  }
+
+  .rif-input-group .rif-numero-input {
+    min-width: 80px;
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1106,6 +1432,18 @@ select.form-control {
 
   .star-rating {
     font-size: 20px;
+  }
+
+  .rif-input-group .rif-prefix,
+  .rif-input-group .rif-digito {
+    font-size: 14px;
+    padding: 6px 4px;
+  }
+
+  .rif-input-group .rif-numero-input {
+    font-size: 13px;
+    min-width: 60px;
+    letter-spacing: 1px;
   }
 }
 </style>

@@ -87,14 +87,14 @@ export function navConfig(role) {
           { key: 'logs', label: 'Bitácora', icon: 'bi bi-clock-history' }
         ]
       },
-      {
-        section: 'Configuración',
-        items: [
-          { key: 'configuracion_sede', label: 'Config. Sede', icon: 'bi bi-gear' },
-          { key: 'configuracion_email', label: 'Config. Email', icon: 'bi bi-envelope' },
-          { key: 'configuracion_whatsapp', label: 'Config. WhatsApp', icon: 'bi bi-whatsapp' }
-        ]
-      },
+    ///  {
+     ///   section: 'Configuración',
+       //// items: [
+    ////      { key: 'configuracion_sede', label: 'Config. Sede', icon: 'bi bi-gear' },
+       ///   { key: 'configuracion_email', label: 'Config. Email', icon: 'bi bi-envelope' },
+       //   { key: 'configuracion_whatsapp', label: 'Config. WhatsApp', icon: 'bi bi-whatsapp' }
+    ////    ]
+   ///   },
       {
         section: 'Reportes',
         items: [

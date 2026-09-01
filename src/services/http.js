@@ -60,7 +60,7 @@ const http = axios.create({
 })
 
 // ============================================
-// INTERCEPTOR DE REQUEST
+// INTERCEPTOR DE REQUEST - CORREGIDO
 // ============================================
 
 http.interceptors.request.use(
@@ -69,6 +69,13 @@ http.interceptors.request.use(
     const token = localStorage.getItem('lc_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+    
+    // ⭐ IMPORTANTE: Si es FormData, eliminar Content-Type 
+    // para que axios lo configure automáticamente con el boundary correcto
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+      console.log('📤 Enviando FormData - Content-Type eliminado para que axios lo configure')
     }
     
     // Log de peticiones en desarrollo
@@ -119,6 +126,17 @@ http.interceptors.response.use(
     // Manejar error 403 (Prohibido)
     if (error.response?.status === 403) {
       console.warn('⚠️ Acceso denegado. Permisos insuficientes.')
+    }
+    
+    // Manejar error 415 (Unsupported Media Type) - FormData mal configurado
+    if (error.response?.status === 415) {
+      console.error('⚠️ Error 415: Verifica que el Content-Type sea multipart/form-data')
+      console.error('📋 Config:', {
+        method: error.config?.method,
+        url: error.config?.url,
+        headers: error.config?.headers,
+        isFormData: error.config?.data instanceof FormData
+      })
     }
     
     // Manejar error 500 (Error del servidor)

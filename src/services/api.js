@@ -262,6 +262,157 @@ export const ProductosAPI = {
 }
 
 // ============================================
+// IMÁGENES DE PRODUCTOS
+// ============================================
+export const ImagenProductoAPI = {
+  // Listar todas las imágenes
+  list() {
+    return http.get('/ImagenProducto')
+  },
+  
+  // Listar con paginación
+  listPaginated(params) {
+    return http.get('/ImagenProducto/paginated', { params })
+  },
+  
+  // Obtener una imagen por ID
+  getById(id) {
+    return http.get(`/ImagenProducto/${id}`)
+  },
+  
+  // ✅ SUBIR IMAGEN COMO ARCHIVO (multipart/form-data)
+  uploadFile(productoId, archivo, esPrincipal = false, descripcion = '', usuarioSubida = null) {
+    const formData = new FormData()
+    formData.append('producto_id', productoId)
+    formData.append('archivo', archivo)
+    formData.append('es_principal', esPrincipal ? 'true' : 'false')
+    formData.append('descripcion', descripcion || '')
+    if (usuarioSubida) {
+      formData.append('usuario_subida', usuarioSubida)
+    }
+
+    return http.post('/ImagenProducto/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+  
+  // ✅ SUBIR MÚLTIPLES IMÁGENES
+  uploadMultiple(productoId, archivos, usuarioSubida = null) {
+    const formData = new FormData()
+    formData.append('producto_id', productoId)
+    archivos.forEach((archivo) => {
+      formData.append('archivos', archivo)
+    })
+    if (usuarioSubida) {
+      formData.append('usuario_subida', usuarioSubida)
+    }
+
+    return http.post('/ImagenProducto/upload-multiple', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+  
+  // Crear imagen (con URL - para casos especiales)
+  create(data) {
+    return http.post('/ImagenProducto', data)
+  },
+  
+  // Actualizar una imagen
+  update(id, data) {
+    return http.put(`/ImagenProducto/${id}`, data)
+  },
+  
+  // Eliminar una imagen
+  remove(id) {
+    return http.delete(`/ImagenProducto/${id}`)
+  },
+  
+  // Obtener imágenes de un producto
+  getByProducto(productoId) {
+    return http.get(`/ImagenProducto/producto/${productoId}`)
+  },
+  
+  // Eliminar todas las imágenes de un producto
+  removeByProducto(productoId) {
+    return http.delete(`/ImagenProducto/producto/${productoId}`)
+  },
+  
+  // Obtener imagen principal de un producto
+  getPrincipal(productoId) {
+    return http.get(`/ImagenProducto/producto/${productoId}/principal`)
+  },
+  
+  // Obtener resumen de imágenes de un producto
+  getResumen(productoId) {
+    return http.get(`/ImagenProducto/producto/${productoId}/resumen`)
+  },
+  
+  // Estadísticas generales
+  getEstadisticas() {
+    return http.get('/ImagenProducto/estadisticas')
+  },
+  
+  // Imágenes por formato
+  getPorFormato() {
+    return http.get('/ImagenProducto/por-formato')
+  },
+  
+  // Imágenes por producto
+  getPorProducto() {
+    return http.get('/ImagenProducto/por-producto')
+  },
+  
+  // Verificar si un producto tiene imágenes
+  hasImagenes(productoId) {
+    return http.get(`/ImagenProducto/producto/${productoId}/has-imagenes`)
+  },
+  
+  // Contar imágenes de un producto
+  countByProducto(productoId) {
+    return http.get(`/ImagenProducto/producto/${productoId}/count`)
+  },
+  
+  // Establecer imagen como principal
+  setPrincipal(imagenId, productoId) {
+    return http.post('/ImagenProducto/principal', { imagen_id: imagenId, producto_id: productoId })
+  },
+  
+  // Reordenar imagen (individual)
+  reordenar(imagenId, nuevoOrden, productoId = null) {
+    return http.post('/ImagenProducto/reordenar', { imagen_id: imagenId, nuevo_orden: nuevoOrden, producto_id: productoId })
+  },
+  
+  // Reordenar imágenes (masivo)
+  reordenarMasivo(productoId, ordenIds) {
+    return http.post('/ImagenProducto/reordenar-masivo', { producto_id: productoId, orden_ids: ordenIds })
+  },
+  
+  // Duplicar imagen a otro producto
+  duplicar(id, nuevoProductoId) {
+    return http.post(`/ImagenProducto/${id}/duplicar/${nuevoProductoId}`)
+  },
+  
+  // Limpiar imágenes huérfanas
+  limpiarHuerfanas() {
+    return http.delete('/ImagenProducto/limpiar-huerfanas')
+  },
+  
+  // Verificar si existe
+  checkExists(productoId, url, excludeId = null) {
+    return http.get('/ImagenProducto/check-exists', { params: { productoId, url, excludeId } })
+  },
+  
+  // Verificar si tiene imagen principal
+  hasPrincipal(productoId) {
+    return http.get(`/ImagenProducto/producto/${productoId}/has-principal`)
+  }
+}
+
+// ============================================
 // INGREDIENTES
 // ============================================
 export const IngredientesAPI = {
@@ -298,140 +449,241 @@ export const IngredientesAPI = {
 // KARDEX (Inventario)
 // ============================================
 export const KardexAPI = {
+  // Listar todos los movimientos
   list(params = {}) {
     return http.get('/Kardex', { params })
   },
   
+  // Listar con paginación
+  listPaginated(params) {
+    return http.get('/Kardex/paginated', { params })
+  },
+  
+  // Obtener un movimiento por ID
   getById(id) {
     return http.get(`/Kardex/${id}`)
   },
   
-  getByProducto(productoId) {
-    return http.get(`/Kardex/producto/${productoId}`)
+  // Obtener movimientos por producto
+  getByProducto(productoId, params = {}) {
+    return http.get(`/Kardex/producto/${productoId}`, { params })
   },
   
-  getByIngrediente(ingredienteId) {
-    return http.get(`/Kardex/ingrediente/${ingredienteId}`)
+  // Obtener movimientos por ingrediente
+  getByIngrediente(ingredienteId, params = {}) {
+    return http.get(`/Kardex/ingrediente/${ingredienteId}`, { params })
   },
   
+  // Obtener saldo de un producto
+  getSaldoProducto(productoId) {
+    return http.get(`/Kardex/producto/${productoId}/saldo`)
+  },
+  
+  // Obtener saldo de un ingrediente
+  getSaldoIngrediente(ingredienteId) {
+    return http.get(`/Kardex/ingrediente/${ingredienteId}/saldo`)
+  },
+  
+  // Crear movimiento
+  create(data) {
+    return http.post('/Kardex', data)
+  },
+  
+  // Actualizar movimiento
+  update(id, data) {
+    return http.put(`/Kardex/${id}`, data)
+  },
+  
+  // Eliminar movimiento
+  remove(id) {
+    return http.delete(`/Kardex/${id}`)
+  },
+  
+  // Registrar entrada
   entrada(data) {
     return http.post('/Kardex/entrada', data)
   },
   
+  // Registrar salida
   salida(data) {
     return http.post('/Kardex/salida', data)
   },
   
+  // Registrar ajuste
   ajuste(data) {
     return http.post('/Kardex/ajuste', data)
+  },
+  
+  // Registrar devolución
+  devolucion(data) {
+    return http.post('/Kardex/devolucion', data)
+  },
+  
+  // Obtener estadísticas
+  getEstadisticas() {
+    return http.get('/Kardex/estadisticas')
+  },
+  
+  // Obtener estadísticas de un producto
+  getEstadisticasProducto(productoId) {
+    return http.get(`/Kardex/producto/${productoId}/estadisticas`)
+  },
+  
+  // Obtener estadísticas de un ingrediente
+  getEstadisticasIngrediente(ingredienteId) {
+    return http.get(`/Kardex/ingrediente/${ingredienteId}/estadisticas`)
+  },
+  
+  // Productos más movidos
+  getProductosMasMovidos() {
+    return http.get('/Kardex/productos-mas-movidos')
+  },
+  
+  // Ingredientes más movidos
+  getIngredientesMasMovidos() {
+    return http.get('/Kardex/ingredientes-mas-movidos')
+  },
+  
+  // Resumen de un producto
+  getResumenProducto(productoId) {
+    return http.get(`/Kardex/producto/${productoId}/resumen`)
+  },
+  
+  // Resumen de un ingrediente
+  getResumenIngrediente(ingredienteId) {
+    return http.get(`/Kardex/ingrediente/${ingredienteId}/resumen`)
+  },
+  
+  // Resumen de todos los productos
+  getResumenProductos() {
+    return http.get('/Kardex/resumen-productos')
+  },
+  
+  // Resumen de todos los ingredientes
+  getResumenIngredientes() {
+    return http.get('/Kardex/resumen-ingredientes')
+  },
+  
+  // Calcular saldos de un movimiento
+  calcularSaldos(id) {
+    return http.get(`/Kardex/${id}/calcular-saldos`)
+  },
+  
+  // Corregir saldos
+  corregirSaldos(data) {
+    return http.post('/Kardex/corregir-saldos', data)
+  },
+  
+  // Recalcular producto
+  recalcularProducto(productoId) {
+    return http.post(`/Kardex/recalcular/producto/${productoId}`)
+  },
+  
+  // Recalcular ingrediente
+  recalcularIngrediente(ingredienteId) {
+    return http.post(`/Kardex/recalcular/ingrediente/${ingredienteId}`)
+  },
+  
+  // Validar existencia
+  validarExistencia(data) {
+    return http.post('/Kardex/validar-existencia', data)
+  },
+  
+  // Limpiar movimientos antiguos
+  limpiarAntiguos(dias) {
+    return http.delete(`/Kardex/limpiar-antiguos?dias=${dias}`)
+  },
+  
+  // Obtener movimientos por documento
+  getByDocumento(tipo, id) {
+    return http.get(`/Kardex/documento?tipo=${tipo}&id=${id}`)
   }
 }
 
 // ============================================
-// ⭐ PROVEEDORES (COMPLETO)
+// PROVEEDORES
 // ============================================
 export const ProveedoresAPI = {
-  // Listar todos los proveedores
   list() {
     return http.get('/Proveedor')
   },
   
-  // Listar con paginación
   listPaginated(params) {
     return http.get('/Proveedor/paginated', { params })
   },
   
-  // Obtener por ID
   getById(id) {
     return http.get(`/Proveedor/${id}`)
   },
   
-  // Crear proveedor
   create(data) {
     return http.post('/Proveedor', data)
   },
   
-  // Actualizar proveedor
   update(id, data) {
     return http.put(`/Proveedor/${id}`, data)
   },
   
-  // Eliminar proveedor
   remove(id) {
     return http.delete(`/Proveedor/${id}`)
   },
   
-  // Obtener proveedores destacados
   getDestacados() {
     return http.get('/Proveedor/destacados')
   },
   
-  // Obtener proveedores por calificación
   getByCalificacion(calificacion) {
     return http.get(`/Proveedor/calificacion/${calificacion}`)
   },
   
-  // Obtener resumen de un proveedor
   getResumen(id) {
     return http.get(`/Proveedor/${id}/resumen`)
   },
   
-  // Estadísticas generales
   getEstadisticas() {
     return http.get('/Proveedor/estadisticas')
   },
   
-  // Proveedores por ciudad
   getPorCiudad() {
     return http.get('/Proveedor/por-ciudad')
   },
   
-  // Proveedores por estado
   getPorEstado() {
     return http.get('/Proveedor/por-estado')
   },
   
-  // Proveedores por calificación
   getPorCalificacion() {
     return http.get('/Proveedor/por-calificacion')
   },
   
-  // Tipos de persona disponibles
   getTiposPersona() {
     return http.get('/Proveedor/tipos-persona')
   },
   
-  // Términos de pago disponibles
   getTerminosPago() {
     return http.get('/Proveedor/terminos-pago')
   },
   
-  // Calificar proveedor
   calificar(data) {
     return http.post('/Proveedor/calificar', data)
   },
   
-  // Cambiar estado
   toggleStatus(id) {
     return http.patch(`/Proveedor/${id}/estado`)
   },
   
-  // Limpiar proveedores inactivos
   limpiarInactivos() {
     return http.delete('/Proveedor/limpiar-inactivos')
   },
   
-  // Verificar si existe RUC
   checkRuc(ruc) {
     return http.get(`/Proveedor/check-ruc?ruc=${ruc}`)
   },
   
-  // Verificar si existe nombre
   checkNombre(nombre) {
     return http.get(`/Proveedor/check-nombre?nombre=${nombre}`)
   },
   
-  // Verificar si tiene compras
   hasCompras(id) {
     return http.get(`/Proveedor/${id}/has-compras`)
   }
@@ -441,39 +693,141 @@ export const ProveedoresAPI = {
 // COMPRAS
 // ============================================
 export const ComprasAPI = {
+  // Listar todas las compras
   list(params = {}) {
     return http.get('/Compra', { params })
   },
   
+  // Listar con paginación
+  listPaginated(params) {
+    return http.get('/Compra/paginated', { params })
+  },
+  
+  // Obtener una compra por ID
   getById(id) {
     return http.get(`/Compra/${id}`)
   },
   
+  // Obtener compra por número
+  getByNumero(numeroCompra) {
+    return http.get(`/Compra/numero/${numeroCompra}`)
+  },
+  
+  // Crear compra
   create(data) {
     return http.post('/Compra', data)
   },
   
+  // Actualizar compra
   update(id, data) {
     return http.put(`/Compra/${id}`, data)
   },
   
+  // Eliminar compra
   remove(id) {
     return http.delete(`/Compra/${id}`)
   },
   
-  cambiarEstado(id, estado) {
-    return http.post(`/Compra/cambiar-estado`, { id, estado })
-  },
-  
+  // Obtener compras por proveedor
   getByProveedor(proveedorId) {
     return http.get(`/Compra/proveedor/${proveedorId}`)
   },
   
+  // Obtener compras por sede
   getBySede(sedeId) {
     return http.get(`/Compra/sede/${sedeId}`)
+  },
+  
+  // Obtener compras por estado
+  getByEstado(estado) {
+    return http.get(`/Compra/estado/${estado}`)
+  },
+  
+  // Obtener resumen de una compra
+  getResumen(id) {
+    return http.get(`/Compra/${id}/resumen`)
+  },
+  
+  // Obtener estadísticas
+  getEstadisticas() {
+    return http.get('/Compra/estadisticas')
+  },
+  
+  // Obtener compras por estado (agrupados)
+  getPorEstado() {
+    return http.get('/Compra/por-estado')
+  },
+  
+  // Obtener compras por proveedor (agrupados)
+  getPorProveedor() {
+    return http.get('/Compra/por-proveedor')
+  },
+  
+  // Obtener gastos por proveedor
+  getGastosPorProveedor() {
+    return http.get('/Compra/gastos-por-proveedor')
+  },
+  
+  // Calcular total
+  calcularTotal(id) {
+    return http.get(`/Compra/calcular-total?id=${id}`)
+  },
+  
+  // Verificar si tiene detalles
+  hasDetalles(id) {
+    return http.get(`/Compra/${id}/has-detalles`)
+  },
+  
+  // Verificar si está aprobada
+  isAprobada(id) {
+    return http.get(`/Compra/${id}/is-aprobada`)
+  },
+  
+  // Verificar si está recibida
+  isRecibida(id) {
+    return http.get(`/Compra/${id}/is-recibida`)
+  },
+  
+  // Cambiar estado
+  cambiarEstado(data) {
+    return http.post('/Compra/cambiar-estado', data)
+  },
+  
+  // Aprobar compra
+  aprobar(id, data) {
+    return http.post(`/Compra/aprobar?id=${id}`, data)
+  },
+  
+  // Recibir compra
+  recibir(id, data) {
+    return http.post(`/Compra/recibir?id=${id}`, data)
+  },
+  
+  // Cancelar compra
+  cancelar(id, motivo) {
+    return http.post(`/Compra/cancelar/${id}`, { motivo })
+  },
+  
+  // Generar número de compra
+  generarNumero() {
+    return http.post('/Compra/generar-numero')
+  },
+  
+  // Recalcular totales
+  recalcularTotales(id) {
+    return http.post(`/Compra/recalcular-totales/${id}`)
+  },
+  
+  // Limpiar compras antiguas
+  limpiarAntiguas(dias) {
+    return http.delete(`/Compra/limpiar-antiguas?dias=${dias}`)
+  },
+  
+  // Verificar número de compra
+  checkNumero(numero) {
+    return http.get(`/Compra/check-numero?numero=${numero}`)
   }
 }
-
 // ============================================
 // MESAS
 // ============================================
@@ -552,89 +906,298 @@ export const ClientesAPI = {
 // PEDIDOS
 // ============================================
 export const PedidosAPI = {
+  // Listar todos los pedidos
   list(params = {}) {
     return http.get('/Pedido', { params })
   },
   
+  // Listar con paginación
+  listPaginated(params) {
+    return http.get('/Pedido/paginated', { params })
+  },
+  
+  // Obtener un pedido por ID
   getById(id) {
     return http.get(`/Pedido/${id}`)
   },
   
+  // Obtener pedido por número
+  getByNumero(numeroPedido) {
+    return http.get(`/Pedido/numero/${numeroPedido}`)
+  },
+  
+  // Crear pedido
   create(data) {
     return http.post('/Pedido', data)
   },
   
+  // Actualizar pedido
   update(id, data) {
     return http.put(`/Pedido/${id}`, data)
   },
   
+  // Eliminar pedido
   remove(id) {
     return http.delete(`/Pedido/${id}`)
   },
   
-  changeStatus(id, status) {
-    return http.patch(`/Pedido/${id}/status`, { status })
-  },
-  
-  cancel(id, motivo) {
-    return http.post(`/Pedido/${id}/cancelar`, { motivo })
-  },
-  
-  getBySede(sedeId) {
-    return http.get(`/Pedido/sede/${sedeId}`)
-  },
-  
+  // Obtener pedidos por cliente
   getByCliente(clienteId) {
     return http.get(`/Pedido/cliente/${clienteId}`)
   },
   
+  // Obtener pedidos por mesa
   getByMesa(mesaId) {
     return http.get(`/Pedido/mesa/${mesaId}`)
   },
   
+  // Obtener pedidos por sede
+  getBySede(sedeId) {
+    return http.get(`/Pedido/sede/${sedeId}`)
+  },
+  
+  // Obtener pedidos por estado
   getByEstado(estado) {
     return http.get(`/Pedido/estado/${estado}`)
+  },
+  
+  // Obtener pedidos por fecha
+  getByFecha(params) {
+    return http.get('/Pedido/fecha', { params })
+  },
+  
+  // Obtener resumen de un pedido
+  getResumen(id) {
+    return http.get(`/Pedido/${id}/resumen`)
+  },
+  
+  // Obtener estadísticas
+  getEstadisticas() {
+    return http.get('/Pedido/estadisticas')
+  },
+  
+  // Obtener pedidos por estado (agrupados)
+  getPorEstado() {
+    return http.get('/Pedido/por-estado')
+  },
+  
+  // Obtener pedidos por tipo
+  getPorTipo() {
+    return http.get('/Pedido/por-tipo')
+  },
+  
+  // Obtener pedidos por sede
+  getPorSede() {
+    return http.get('/Pedido/por-sede')
+  },
+  
+  // Obtener ingresos
+  getIngresos(params) {
+    return http.get('/Pedido/ingresos', { params })
+  },
+  
+  // Verificar si está pagado
+  isPagado(id) {
+    return http.get(`/Pedido/${id}/is-pagado`)
+  },
+  
+  // Verificar si tiene detalles
+  hasDetalles(id) {
+    return http.get(`/Pedido/${id}/has-detalles`)
+  },
+  
+  // Cambiar estado
+  cambiarEstado(data) {
+    return http.post('/Pedido/cambiar-estado', data)
+  },
+  
+  // Calificar pedido
+  calificar(data) {
+    return http.post('/Pedido/calificar', data)
+  },
+  
+  // Agregar pago
+  agregarPago(data) {
+    return http.post('/Pedido/agregar-pago', data)
+  },
+  
+  // Cancelar pedido
+  cancelar(id, motivo) {
+    return http.post(`/Pedido/cancelar/${id}`, { motivo })
+  },
+  
+  // Duplicar pedido
+  duplicar(id) {
+    return http.post(`/Pedido/${id}/duplicar`)
+  },
+  
+  // Generar número de pedido
+  generarNumero() {
+    return http.post('/Pedido/generar-numero')
+  },
+  
+  // Limpiar pedidos antiguos
+  limpiarAntiguos(dias) {
+    return http.delete(`/Pedido/limpiar-antiguos?dias=${dias}`)
+  },
+  
+  // Verificar número de pedido
+  checkNumero(numero) {
+    return http.get(`/Pedido/check-numero?numero=${numero}`)
   }
 }
-
 // ============================================
 // CRÉDITOS
 // ============================================
 export const CreditosAPI = {
+  // Listar todos los créditos
   list(params = {}) {
     return http.get('/Credito', { params })
   },
   
+  // Listar con paginación
+  listPaginated(params) {
+    return http.get('/Credito/paginated', { params })
+  },
+  
+  // Obtener un crédito por ID
   getById(id) {
     return http.get(`/Credito/${id}`)
   },
   
+  // Crear crédito
   create(data) {
     return http.post('/Credito', data)
   },
   
+  // Actualizar crédito
   update(id, data) {
     return http.put(`/Credito/${id}`, data)
   },
   
+  // Eliminar crédito
   remove(id) {
     return http.delete(`/Credito/${id}`)
   },
   
-  cobrar(id, monto, metodo_pago) {
-    return http.post(`/Credito/${id}/cobrar`, { monto, metodo_pago })
-  },
-  
+  // Obtener créditos por cliente
   getByCliente(clienteId) {
     return http.get(`/Credito/cliente/${clienteId}`)
   },
   
+  // Obtener créditos por pedido
+  getByPedido(pedidoId) {
+    return http.get(`/Credito/pedido/${pedidoId}`)
+  },
+  
+  // Obtener créditos por sede
   getBySede(sedeId) {
     return http.get(`/Credito/sede/${sedeId}`)
   },
   
+  // Obtener créditos vencidos
   getVencidos() {
     return http.get('/Credito/vencidos')
+  },
+  
+  // Obtener créditos próximos a vencer
+  getProximosVencer() {
+    return http.get('/Credito/proximos-vencer')
+  },
+  
+  // Obtener resumen de un cliente
+  getResumenCliente(clienteId) {
+    return http.get(`/Credito/cliente/${clienteId}/resumen`)
+  },
+  
+  // Obtener estadísticas
+  getEstadisticas() {
+    return http.get('/Credito/estadisticas')
+  },
+  
+  // Obtener créditos por estado (agrupados)
+  getPorEstado() {
+    return http.get('/Credito/por-estado')
+  },
+  
+  // Obtener créditos por método de pago
+  getPorMetodoPago() {
+    return http.get('/Credito/por-metodo-pago')
+  },
+  
+  // Obtener créditos por cliente (agrupados)
+  getPorCliente() {
+    return http.get('/Credito/por-cliente')
+  },
+  
+  // Obtener saldo pendiente
+  getSaldoPendiente(id) {
+    return http.get(`/Credito/${id}/saldo-pendiente`)
+  },
+  
+  // Verificar si está pagado
+  isPagado(id) {
+    return http.get(`/Credito/${id}/is-pagado`)
+  },
+  
+  // Verificar si tiene pagos
+  hasPagos(id) {
+    return http.get(`/Credito/${id}/has-pagos`)
+  },
+  
+  // Registrar pago
+  registrarPago(data) {
+    return http.post('/Credito/registrar-pago', data)
+  },
+  
+  // Cancelar crédito
+  cancelar(data) {
+    return http.post('/Credito/cancelar', data)
+  },
+  
+  // Calcular interés
+  calcularInteres(data) {
+    return http.post('/Credito/calcular-interes', data)
+  },
+  
+  // Generar plan de pagos
+  generarPlanPagos(id) {
+    return http.post(`/Credito/generar-plan-pagos/${id}`)
+  },
+  
+  // Verificar vencidos
+  verificarVencidos() {
+    return http.post('/Credito/verificar-vencidos')
+  },
+  
+  // Aplicar mora
+  aplicarMora(data) {
+    return http.post('/Credito/aplicar-mora', data)
+  },
+  
+  // Actualizar estado
+  updateEstado(id, estado) {
+    return http.patch(`/Credito/${id}/estado`, { estado })
+  },
+  
+  // Actualizar cuotas pagadas
+  updateCuotasPagadas(id, cuotasPagadas) {
+    return http.patch(`/Credito/${id}/cuotas-pagadas`, { cuotas_pagadas: cuotasPagadas })
+  },
+  
+  // Limpiar créditos antiguos
+  limpiarAntiguos(dias) {
+    return http.delete(`/Credito/limpiar-antiguos?dias=${dias}`)
+  },
+  
+  // Verificar existencia
+  checkExists(params) {
+    return http.get('/Credito/check-exists', { params })
+  },
+  
+  // Calcular mora
+  calcularMora(id) {
+    return http.get(`/Credito/${id}/calcular-mora`)
   }
 }
 
@@ -642,32 +1205,114 @@ export const CreditosAPI = {
 // AUDITORÍA DE CAJA
 // ============================================
 export const AuditoriaCajaAPI = {
+  // Listar todas las auditorías
   list(params = {}) {
     return http.get('/AuditoriaCaja', { params })
   },
   
+  // Listar con paginación
+  listPaginated(params) {
+    return http.get('/AuditoriaCaja/paginated', { params })
+  },
+  
+  // Obtener una auditoría por ID
   getById(id) {
     return http.get(`/AuditoriaCaja/${id}`)
   },
   
-  abrir(data) {
-    return http.post('/AuditoriaCaja/abrir', data)
+  // Actualizar auditoría
+  update(id, data) {
+    return http.put(`/AuditoriaCaja/${id}`, data)
   },
   
-  cerrar(data) {
-    return http.post('/AuditoriaCaja/cerrar', data)
+  // Eliminar auditoría
+  remove(id) {
+    return http.delete(`/AuditoriaCaja/${id}`)
   },
   
-  getBySede(sedeId) {
-    return http.get(`/AuditoriaCaja/sede/${sedeId}`)
-  },
-  
+  // Obtener auditoría actual de una sede
   getActual(sedeId) {
     return http.get(`/AuditoriaCaja/sede/${sedeId}/actual`)
   },
   
-  getEstadisticas(sedeId) {
+  // Obtener auditorías por sede
+  getBySede(sedeId) {
+    return http.get(`/AuditoriaCaja/sede/${sedeId}`)
+  },
+  
+  // Obtener auditorías por usuario
+  getByUsuario(usuarioId) {
+    return http.get(`/AuditoriaCaja/usuario/${usuarioId}`)
+  },
+  
+  // Obtener auditorías por estado
+  getByEstado(estado) {
+    return http.get(`/AuditoriaCaja/estado/${estado}`)
+  },
+  
+  // Obtener reporte de cierre
+  getReporteCierre(id) {
+    return http.get(`/AuditoriaCaja/${id}/reporte-cierre`)
+  },
+  
+  // Obtener estadísticas
+  getEstadisticas() {
+    return http.get('/AuditoriaCaja/estadisticas')
+  },
+  
+  // Obtener estadísticas por sede
+  getEstadisticasBySede(sedeId) {
     return http.get(`/AuditoriaCaja/sede/${sedeId}/estadisticas`)
+  },
+  
+  // Obtener resumen por sede
+  getResumenBySede(sedeId) {
+    return http.get(`/AuditoriaCaja/sede/${sedeId}/resumen`)
+  },
+  
+  // Obtener resumen de todas las sedes
+  getResumenTodasSedes() {
+    return http.get('/AuditoriaCaja/resumen-todas-sedes')
+  },
+  
+  // Verificar si tiene caja abierta
+  hasAbierta(sedeId) {
+    return http.get(`/AuditoriaCaja/sede/${sedeId}/has-abierta`)
+  },
+  
+  // Verificar si puede cerrar
+  puedeCerrar(id) {
+    return http.get(`/AuditoriaCaja/${id}/puede-cerrar`)
+  },
+  
+  // Obtener monto esperado
+  getMontoEsperado(id) {
+    return http.get(`/AuditoriaCaja/${id}/monto-esperado`)
+  },
+  
+  // Abrir caja
+  abrir(data) {
+    return http.post('/AuditoriaCaja/abrir', data)
+  },
+  
+  // Cerrar caja
+  cerrar(data) {
+    return http.post('/AuditoriaCaja/cerrar', data)
+  },
+  
+  // Recalcular auditoría
+  recalcular(id) {
+    return http.post(`/AuditoriaCaja/recalcular/${id}`)
+  },
+  
+  // Cierre automático
+  cerrarAutomatico(data) {
+    return http.post('/AuditoriaCaja/cerrar-automatico', data)
+  },
+  
+  // Limpiar auditorías antiguas
+  limpiarAntiguos(dias) {
+    return http.delete(`/AuditoriaCaja/limpiar-antiguos?dias=${dias}`)
   }
 }
 
@@ -675,28 +1320,134 @@ export const AuditoriaCajaAPI = {
 // PROMOCIONES
 // ============================================
 export const PromocionesAPI = {
+  // Listar todas las promociones
   list(params = {}) {
     return http.get('/Promocion', { params })
   },
   
+  // Listar con paginación
+  listPaginated(params) {
+    return http.get('/Promocion/paginated', { params })
+  },
+  
+  // Obtener una promoción por ID
   getById(id) {
     return http.get(`/Promocion/${id}`)
   },
   
+  // Obtener promoción por código
+  getByCodigo(codigo) {
+    return http.get(`/Promocion/codigo/${codigo}`)
+  },
+  
+  // Crear promoción
   create(data) {
     return http.post('/Promocion', data)
   },
   
+  // Actualizar promoción
   update(id, data) {
     return http.put(`/Promocion/${id}`, data)
   },
   
+  // Eliminar promoción
   remove(id) {
     return http.delete(`/Promocion/${id}`)
   },
   
+  // Obtener promociones por sede
+  getBySede(sedeId) {
+    return http.get(`/Promocion/sede/${sedeId}`)
+  },
+  
+  // Obtener promociones por producto
+  getByProducto(productoId) {
+    return http.get(`/Promocion/producto/${productoId}`)
+  },
+  
+  // Obtener promociones por categoría
+  getByCategoria(categoriaId) {
+    return http.get(`/Promocion/categoria/${categoriaId}`)
+  },
+  
+  // Obtener promociones vigentes
+  getVigentes() {
+    return http.get('/Promocion/vigentes')
+  },
+  
+  // Obtener resumen de una promoción
+  getResumen(id) {
+    return http.get(`/Promocion/${id}/resumen`)
+  },
+  
+  // Obtener estadísticas
+  getEstadisticas() {
+    return http.get('/Promocion/estadisticas')
+  },
+  
+  // Obtener promociones por tipo (agrupadas)
+  getPorTipo() {
+    return http.get('/Promocion/por-tipo')
+  },
+  
+  // Obtener promociones por sede (agrupadas)
+  getPorSede() {
+    return http.get('/Promocion/por-sede')
+  },
+  
+  // Validar promoción
+  validar(data) {
+    return http.post('/Promocion/validar', data)
+  },
+  
+  // Aplicar promoción
+  aplicar(data) {
+    return http.post('/Promocion/aplicar', data)
+  },
+  
+  // Aplicar código de promoción
+  aplicarCodigo(data) {
+    return http.post('/Promocion/aplicar-codigo', data)
+  },
+  
+  // Importar promociones
+  importar(data) {
+    return http.post('/Promocion/importar', data)
+  },
+  
+  // Cambiar estado
   toggleStatus(id) {
     return http.patch(`/Promocion/${id}/estado`)
+  },
+  
+  // Incrementar usos
+  incrementarUsos(id) {
+    return http.patch(`/Promocion/${id}/incrementar-usos`)
+  },
+  
+  // Limpiar promociones expiradas
+  limpiarExpiradas() {
+    return http.delete('/Promocion/limpiar-expiradas')
+  },
+  
+  // Limpiar promociones inactivas
+  limpiarInactivas() {
+    return http.delete('/Promocion/limpiar-inactivas')
+  },
+  
+  // Verificar código
+  checkCodigo(codigo) {
+    return http.get(`/Promocion/check-codigo?codigo=${codigo}`)
+  },
+  
+  // Verificar nombre
+  checkNombre(nombre) {
+    return http.get(`/Promocion/check-nombre?nombre=${nombre}`)
+  },
+  
+  // Verificar si tiene usos
+  hasUsos(id) {
+    return http.get(`/Promocion/${id}/has-usos`)
   }
 }
 
@@ -1146,108 +1897,136 @@ export const TokensAPI = {
   }
 }
 
+
+
+
 // ============================================
 // CUENTAS BANCARIAS
 // ============================================
 export const CuentasBancariasAPI = {
-  list() {
-    return http.get('/CuentaBancaria')
+  // Listar todas las cuentas
+  list(params = {}) {
+    return http.get('/CuentaBancaria', { params })
   },
   
+  // Listar con paginación
   listPaginated(params) {
     return http.get('/CuentaBancaria/paginated', { params })
   },
   
+  // Obtener una cuenta por ID
   getById(id) {
     return http.get(`/CuentaBancaria/${id}`)
   },
   
+  // Crear cuenta
   create(data) {
     return http.post('/CuentaBancaria', data)
   },
   
+  // Actualizar cuenta
   update(id, data) {
     return http.put(`/CuentaBancaria/${id}`, data)
   },
   
+  // Eliminar cuenta
   remove(id) {
     return http.delete(`/CuentaBancaria/${id}`)
   },
   
+  // Obtener cuentas por sede
   getBySede(sedeId) {
     return http.get(`/CuentaBancaria/sede/${sedeId}`)
   },
   
-  getActivasBySede(sedeId) {
-    return http.get(`/CuentaBancaria/sede/${sedeId}/activas`)
-  },
-  
+  // Obtener cuenta principal de una sede
   getPrincipalBySede(sedeId) {
     return http.get(`/CuentaBancaria/sede/${sedeId}/principal`)
   },
   
+  // Obtener resumen por sede
   getResumenBySede(sedeId) {
     return http.get(`/CuentaBancaria/sede/${sedeId}/resumen`)
   },
   
-  hasCuentas(sedeId) {
-    return http.get(`/CuentaBancaria/sede/${sedeId}/has-cuentas`)
+  // Obtener cuentas activas por sede
+  getActivasBySede(sedeId) {
+    return http.get(`/CuentaBancaria/sede/${sedeId}/activas`)
   },
   
-  countBySede(sedeId) {
-    return http.get(`/CuentaBancaria/sede/${sedeId}/count`)
-  },
-  
-  hasPrincipal(sedeId) {
-    return http.get(`/CuentaBancaria/sede/${sedeId}/has-principal`)
-  },
-  
-  setPrincipal(data) {
-    return http.post('/CuentaBancaria/principal', data)
-  },
-  
-  copy(data) {
-    return http.post('/CuentaBancaria/copiar', data)
-  },
-  
-  toggleStatus(id) {
-    return http.patch(`/CuentaBancaria/${id}/estado`)
-  },
-  
-  estadisticas() {
+  // Obtener estadísticas
+  getEstadisticas() {
     return http.get('/CuentaBancaria/estadisticas')
   },
   
-  getByBanco() {
+  // Obtener cuentas por banco (agrupadas)
+  getPorBanco() {
     return http.get('/CuentaBancaria/por-banco')
   },
   
-  getByTipo() {
+  // Obtener cuentas por tipo (agrupadas)
+  getPorTipo() {
     return http.get('/CuentaBancaria/por-tipo')
   },
   
-  getBySedeResumen() {
+  // Obtener cuentas por sede (agrupadas)
+  getPorSede() {
     return http.get('/CuentaBancaria/por-sede')
   },
   
+  // Obtener lista de bancos
   getBancos() {
     return http.get('/CuentaBancaria/bancos')
   },
   
+  // Obtener lista de tipos de cuenta
   getTipos() {
     return http.get('/CuentaBancaria/tipos')
   },
   
+  // Verificar si tiene cuentas
+  hasCuentas(sedeId) {
+    return http.get(`/CuentaBancaria/sede/${sedeId}/has-cuentas`)
+  },
+  
+  // Contar cuentas por sede
+  countBySede(sedeId) {
+    return http.get(`/CuentaBancaria/sede/${sedeId}/count`)
+  },
+  
+  // Establecer cuenta como principal
+  setPrincipal(data) {
+    return http.post('/CuentaBancaria/principal', data)
+  },
+  
+  // Copiar cuenta
+  copiar(data) {
+    return http.post('/CuentaBancaria/copiar', data)
+  },
+  
+  // Cambiar estado de una cuenta
+  toggleStatus(id) {
+    return http.patch(`/CuentaBancaria/${id}/estado`)
+  },
+  
+  // Desactivar todas las cuentas de una sede
   desactivarBySede(sedeId) {
     return http.delete(`/CuentaBancaria/desactivar-sede/${sedeId}`)
   },
   
+  // Limpiar cuentas inactivas
   limpiarInactivas() {
     return http.delete('/CuentaBancaria/limpiar-inactivas')
   },
   
+  // Verificar existencia
   checkExists(params) {
     return http.get('/CuentaBancaria/check-exists', { params })
+  },
+  
+  // Verificar si tiene cuenta principal
+  hasPrincipal(sedeId) {
+    return http.get(`/CuentaBancaria/sede/${sedeId}/has-principal`)
   }
 }
 

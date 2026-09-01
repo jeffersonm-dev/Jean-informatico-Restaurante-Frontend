@@ -365,6 +365,7 @@
                       >
                     </label>
                     <small class="help-text">Formatos: JPG, PNG, GIF, WEBP. Máx: 2MB</small>
+                    <small class="help-text">⚠️ La imagen solo se usa como preview (no se sube al backend)</small>
                   </div>
                 </div>
               </div>
@@ -538,7 +539,7 @@ function onFileSelected(event) {
 
   imagenFile.value = file
 
-  // Crear preview
+  // Crear preview (SOLO para visualizar, NO se guarda en BD)
   const reader = new FileReader()
   reader.onload = (e) => {
     imagenPreview.value = e.target.result
@@ -553,16 +554,6 @@ function removerImagen() {
   // Limpiar el input file
   const fileInput = document.querySelector('input[type="file"]')
   if (fileInput) fileInput.value = ''
-}
-
-// ===== CONVERTIR IMAGEN A BASE64 =====
-function convertirImagenABase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
 }
 
 // ===== LOAD DATA =====
@@ -599,7 +590,7 @@ async function loadItem(id) {
   }
 }
 
-// ===== HANDLE SUBMIT =====
+// ===== HANDLE SUBMIT - CORREGIDO =====
 async function handleSubmit() {
   if (!validateAll()) {
     Swal.fire({
@@ -625,13 +616,7 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    let imagenUrl = form.imagen_url || ''
-
-    // Si hay una imagen nueva subida, convertir a Base64
-    if (imagenFile.value) {
-      imagenUrl = await convertirImagenABase64(imagenFile.value)
-    }
-
+    // ✅ IMPORTANTE: NO enviar imagen_url si está vacía
     const payload = {
       nombre: form.nombre.trim(),
       codigo: form.codigo.trim().toUpperCase(),
@@ -647,12 +632,19 @@ async function handleSubmit() {
       fecha_vencimiento: form.fecha_vencimiento || null,
       ubicacion: form.ubicacion?.trim() || '',
       lote: form.lote?.trim() || '',
-      imagen_url: imagenUrl,
       activo: form.activo
     }
 
+    // ✅ Solo agregar imagen_url si tiene un valor válido
+    if (form.imagen_url && form.imagen_url.trim() !== '') {
+      payload.imagen_url = form.imagen_url.trim()
+    }
+
+    console.log('📤 Enviando payload:', payload)
+
+    let response
     if (isEditing.value) {
-      await IngredientesAPI.update(route.params.id, payload)
+      response = await IngredientesAPI.update(route.params.id, payload)
       Swal.fire({
         title: '¡Éxito!',
         text: 'Ingrediente actualizado correctamente',
@@ -660,7 +652,7 @@ async function handleSubmit() {
         confirmButtonText: 'Aceptar'
       })
     } else {
-      await IngredientesAPI.create(payload)
+      response = await IngredientesAPI.create(payload)
       Swal.fire({
         title: '¡Éxito!',
         text: 'Ingrediente creado correctamente',
@@ -669,12 +661,44 @@ async function handleSubmit() {
       })
     }
     
+    // ✅ Si el ingrediente se creó y hay una imagen seleccionada, mostrar mensaje
+    if (!isEditing.value && imagenFile.value && response?.data?.data?.id) {
+      Swal.fire({
+        title: 'Imagen pendiente',
+        text: 'El ingrediente fue creado. La imagen se puede subir desde la vista de detalles.',
+        icon: 'info',
+        confirmButtonText: 'Entendido'
+      })
+    }
+    
     router.push('/ingredientes')
   } catch (error) {
-    const message = error.response?.data?.message || error.response?.data?.errors || 'Error al guardar'
+    console.error('❌ Error al guardar:', error.response?.data)
+    const errorData = error.response?.data
+    let message = 'Error al guardar el ingrediente'
+    
+    if (errorData?.errors) {
+      const errorsList = errorData.errors
+      const messages = []
+      Object.keys(errorsList).forEach(key => {
+        if (Array.isArray(errorsList[key])) {
+          messages.push(...errorsList[key])
+        } else {
+          messages.push(`${key}: ${errorsList[key]}`)
+        }
+      })
+      message = messages.join('\n')
+    } else if (errorData?.title) {
+      message = errorData.title
+    } else if (errorData?.message) {
+      message = errorData.message
+    } else if (errorData?.detail) {
+      message = errorData.detail
+    }
+    
     Swal.fire({
       title: 'Error',
-      text: typeof message === 'string' ? message : JSON.stringify(message),
+      text: message,
       icon: 'error',
       confirmButtonText: 'Entendido'
     })
