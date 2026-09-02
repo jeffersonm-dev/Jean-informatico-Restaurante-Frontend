@@ -202,7 +202,6 @@ import Swal from 'sweetalert2'
 import ProductoFormModal from './ProductoFormModal.vue'
 import ProductoImagenModal from './ProductoImagenModal.vue'
 
-// ✅ IMPORTAR SOLO LA FUNCIÓN QUE NECESITAS
 import { getImagenUrl } from '@/services/images'
 
 // ============================================
@@ -920,6 +919,9 @@ onMounted(() => {
   text-align: center;
 }
 
+/* ============================================
+   IMAGEN - CONTAINER
+   ============================================ */
 .card-image-container {
   width: 100%;
   height: 150px;
@@ -928,12 +930,20 @@ onMounted(() => {
   overflow: hidden;
   background: #f3f4f6;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* ============================================
+   IMAGEN - CONTAIN (MUESTRA COMPLETA)
+   ============================================ */
 .card-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;  /* ✅ Imagen COMPLETA y centrada */
+  object-position: center;
+  background: #f9fafb;
 }
 
 .card-image-placeholder {
