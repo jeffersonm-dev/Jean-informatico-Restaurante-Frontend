@@ -97,12 +97,11 @@
               <i class="bi bi-eye"></i>
             </button>
             <button 
-              class="icon-btn toggle" 
-              :class="sede.activo ? 'danger' : 'success'"
-              @click="toggleEstado(sede)" 
-              :title="sede.activo ? 'Desactivar' : 'Activar'"
+              class="icon-btn delete" 
+              @click="eliminarSede(sede)" 
+              title="Eliminar"
             >
-              <i :class="sede.activo ? 'bi bi-toggle-off' : 'bi bi-toggle-on'"></i>
+              <i class="bi bi-trash3"></i>
             </button>
           </div>
         </div>
@@ -501,6 +500,51 @@ const ciudadesFiltradas = computed(() => {
 })
 
 // ============================================
+// UTILITY FUNCTIONS
+// ============================================
+const formatearHoraParaAPI = (hora) => {
+  if (!hora) return null
+  
+  // Eliminar espacios y caracteres no numéricos excepto :
+  let limpia = hora.replace(/[^0-9:]/g, '')
+  
+  // Si está vacío después de limpiar
+  if (!limpia) return null
+  
+  // Separar por :
+  const partes = limpia.split(':')
+  
+  // Si tiene más de 3 partes, tomar solo las primeras 3
+  if (partes.length > 3) {
+    partes.splice(3)
+  }
+  
+  // Asegurar que cada parte tenga 2 dígitos
+  const horas = partes[0]?.padStart(2, '0') || '00'
+  const minutos = partes[1]?.padStart(2, '0') || '00'
+  const segundos = partes[2]?.padStart(2, '0') || '00'
+  
+  // Validar que sea una hora válida
+  const horaNum = parseInt(horas)
+  const minNum = parseInt(minutos)
+  const segNum = parseInt(segundos)
+  
+  if (horaNum > 23 || minNum > 59 || segNum > 59) {
+    return null
+  }
+  
+  return `${horas}:${minutos}:${segundos}`
+}
+
+// Función para formatear hora de visualización (HH:mm)
+const formatearHoraVisual = (hora) => {
+  if (!hora) return '08:00'
+  const formateada = formatearHoraParaAPI(hora)
+  if (!formateada) return '08:00'
+  return formateada.substring(0, 5)
+}
+
+// ============================================
 // VALIDACIONES
 // ============================================
 const validarEmail = () => {
@@ -640,9 +684,6 @@ const abrirModalNuevo = () => {
 }
 
 const abrirModalEditar = (sede) => {
-  const apertura = sede.horario_apertura?.slice(0, 5) || '08:00'
-  const cierre = sede.horario_cierre?.slice(0, 5) || '22:00'
-  
   form.value = {
     id: sede.id,
     nombre: sede.nombre || '',
@@ -653,8 +694,8 @@ const abrirModalEditar = (sede) => {
     pais: sede.pais || 'Venezuela',
     telefono: sede.telefono || '',
     email: sede.email || '',
-    horario_apertura: apertura,
-    horario_cierre: cierre,
+    horario_apertura: formatearHoraVisual(sede.horario_apertura),
+    horario_cierre: formatearHoraVisual(sede.horario_cierre),
     dias_atencion: sede.dias_atencion || 'Lunes a Domingo',
     activo: sede.activo !== false
   }
@@ -691,17 +732,21 @@ const guardarSede = async () => {
 
   guardando.value = true
   try {
+    // Formatear horarios correctamente para la API
+    const horarioApertura = formatearHoraParaAPI(form.value.horario_apertura)
+    const horarioCierre = formatearHoraParaAPI(form.value.horario_cierre)
+
     const dataToSend = {
-      nombre: form.value.nombre,
-      codigo: form.value.codigo || null,
-      direccion: form.value.direccion || null,
+      nombre: form.value.nombre.trim(),
+      codigo: form.value.codigo?.trim() || null,
+      direccion: form.value.direccion?.trim() || null,
       ciudad: form.value.ciudad,
       estado: form.value.estado,
       pais: form.value.pais || 'Venezuela',
-      telefono: form.value.telefono || null,
-      email: form.value.email,
-      horario_apertura: form.value.horario_apertura ? form.value.horario_apertura + ':00' : null,
-      horario_cierre: form.value.horario_cierre ? form.value.horario_cierre + ':00' : null,
+      telefono: form.value.telefono?.trim() || null,
+      email: form.value.email.trim(),
+      horario_apertura: horarioApertura,
+      horario_cierre: horarioCierre,
       dias_atencion: form.value.dias_atencion,
       activo: form.value.activo
     }
@@ -754,45 +799,58 @@ const guardarSede = async () => {
   }
 }
 
-const verSede = (id) => {
-  const sede = sedes.value.find(s => s.id === id)
-  if (sede) {
-    sedeSeleccionada.value = sede
-    mostrarModalVer.value = true
-  }
-}
-
-const toggleEstado = async (sede) => {
-  const estadoTexto = sede.activo ? 'desactivar' : 'activar'
+// ============================================
+// ELIMINAR SEDE
+// ============================================
+const eliminarSede = async (sede) => {
   const result = await Swal.fire({
-    title: `¿${estadoTexto === 'desactivar' ? 'Desactivar' : 'Activar'} sede?`,
-    text: `¿Estás seguro de ${estadoTexto} la sede "${sede.nombre}"?`,
+    title: '¿Eliminar sede?',
+    html: `
+      <p>¿Estás seguro de eliminar la sede <strong>"${sede.nombre}"</strong>?</p>
+      <p style="color: #ef4444; font-size: 14px; margin-top: 8px;">
+        <i class="bi bi-exclamation-triangle"></i>
+        Esta acción no se puede deshacer.
+      </p>
+    `,
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: sede.activo ? '#dc3545' : '#28a745',
-    confirmButtonText: `Sí, ${estadoTexto}`,
+    confirmButtonColor: '#dc3545',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Sí, eliminar',
     cancelButtonText: 'Cancelar'
   })
 
   if (result.isConfirmed) {
     try {
-      const response = await SedesAPI.toggleStatus(sede.id)
+      // Usamos el método 'remove' que ya existe en SedesAPI
+      const response = await SedesAPI.remove(sede.id)
       if (response.data.success) {
         Swal.fire({
           icon: 'success',
-          title: 'Estado actualizado',
-          timer: 1500,
+          title: 'Sede eliminada',
+          text: `La sede "${sede.nombre}" ha sido eliminada correctamente.`,
+          timer: 2000,
           showConfirmButton: false
         })
         await cargarSedes()
       }
     } catch (error) {
+      console.error('❌ Error al eliminar:', error)
       Swal.fire({
         icon: 'error',
-        title: 'Error',
-        text: 'No se pudo cambiar el estado de la sede'
+        title: 'Error al eliminar',
+        text: error.response?.data?.message || 'No se pudo eliminar la sede. Intenta nuevamente.',
+        confirmButtonColor: '#E85D3A'
       })
     }
+  }
+}
+
+const verSede = (id) => {
+  const sede = sedes.value.find(s => s.id === id)
+  if (sede) {
+    sedeSeleccionada.value = sede
+    mostrarModalVer.value = true
   }
 }
 
@@ -968,6 +1026,12 @@ onMounted(() => {
   background: #c94f2e;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(232, 93, 58, 0.35);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .btn-primary i {
@@ -1204,19 +1268,14 @@ onMounted(() => {
   color: #3b82f6;
 }
 
-.icon-btn.toggle {
+.icon-btn.delete {
   background: transparent;
   color: #6b7280;
 }
 
-.icon-btn.toggle.danger:hover {
+.icon-btn.delete:hover {
   background: #fef2f2;
   color: #ef4444;
-}
-
-.icon-btn.toggle.success:hover {
-  background: #ecfdf5;
-  color: #10b981;
 }
 
 .card-body {
