@@ -1,7 +1,7 @@
 <template>
   <header class="topbar" :class="{ 'sidebar-collapsed': ui.sidebarCollapsed }">
     <div class="topbar-left">
-      <button class="menu-toggle-btn" @click="ui.toggleMobileSidebar()" title="Abrir / cerrar menú">
+      <button class="menu-toggle-btn" @click="toggleMobileMenu" title="Abrir / cerrar menú">
         <i class="bi bi-list"></i>
       </button>
       <div class="topbar-context">
@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useUiStore } from '../../stores/ui'
@@ -36,6 +36,8 @@ const auth = useAuthStore()
 const ui = useUiStore()
 const route = useRoute()
 const router = useRouter()
+
+const isMobile = ref(window.innerWidth <= 768)
 
 const titles = {
   bienvenida: 'Bienvenida',
@@ -54,7 +56,6 @@ const titles = {
 
 const context = computed(() => titles[route.name] || '—')
 
-// Período actual (Agosto 2026)
 const currentPeriod = computed(() => {
   const now = new Date()
   const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -63,10 +64,35 @@ const currentPeriod = computed(() => {
 
 const initials = computed(() => (auth.user?.nombre || '?').trim().charAt(0).toUpperCase())
 
+// ⭐ Función toggle mejorada para móvil
+function toggleMobileMenu() {
+  console.log('🟢 Topbar toggleMobileMenu - estado actual:', ui.sidebarMobileOpen)
+  ui.sidebarMobileOpen = !ui.sidebarMobileOpen
+  console.log('🟢 Topbar toggleMobileMenu - nuevo estado:', ui.sidebarMobileOpen)
+}
+
 function logout() {
+  if (isMobile.value) {
+    ui.sidebarMobileOpen = false
+  }
   auth.logout()
   router.push({ name: 'login' })
 }
+
+function handleResize() {
+  isMobile.value = window.innerWidth <= 768
+  if (!isMobile.value && ui.sidebarMobileOpen) {
+    ui.sidebarMobileOpen = false
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
 </script>
 
 <style scoped>
@@ -131,9 +157,6 @@ function logout() {
   border-radius: 12px;
 }
 
-/* ============================================
-   TOPBAR RIGHT
-   ============================================ */
 .topbar-right {
   display: flex;
   align-items: center;
@@ -213,9 +236,6 @@ function logout() {
   font-size: 16px;
 }
 
-/* ============================================
-   RESPONSIVE
-   ============================================ */
 @media (max-width: 768px) {
   .topbar {
     padding: 12px 16px;

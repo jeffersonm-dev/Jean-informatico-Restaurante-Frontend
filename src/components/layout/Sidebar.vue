@@ -77,8 +77,13 @@
       </template>
     </nav>
 
-    <!-- Overlay para móvil -->
-    <div class="sidebar-overlay" @click="closeMobile" v-if="ui.sidebarMobileOpen"></div>
+    <!-- Overlay para móvil - CORREGIDO FINAL -->
+    <div 
+      v-if="isMobile && ui.sidebarMobileOpen"
+      class="sidebar-overlay" 
+      @click="closeMobile"
+      @touchstart="closeMobile"
+    ></div>
 
     <!-- Footer -->
     <div class="sidebar-foot">
@@ -88,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onBeforeMount, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onBeforeMount, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '../../stores/ui'
 import { useAuthStore } from '../../stores/auth'
@@ -164,29 +169,46 @@ function isActive(key) {
 }
 
 // ============================================
-// FUNCIONES
+// FUNCIONES - CORREGIDAS FINAL
 // ============================================
 function toggleSidebar() {
   if (isMobile.value) {
-    ui.sidebarMobileOpen = false
+    // En móvil: toggle del sidebar
+    ui.sidebarMobileOpen = !ui.sidebarMobileOpen
+    console.log('🟢 toggleSidebar móvil:', ui.sidebarMobileOpen)
   } else {
+    // En desktop: colapsar/expandir
     ui.toggleSidebar()
   }
 }
 
-function closeMobile() {
-  if (isMobile.value) {
+function closeMobile(event) {
+  // Prevenir cualquier comportamiento por defecto
+  if (event) {
+    event.stopPropagation()
+    event.preventDefault()
+  }
+  
+  console.log('🟢 closeMobile llamado')
+  
+  if (isMobile.value && ui.sidebarMobileOpen) {
     ui.sidebarMobileOpen = false
+    console.log('🟢 closeMobile - sidebar cerrado')
   }
 }
 
 function handleNavClick() {
+  console.log('🟢 handleNavClick - navegando')
   if (isMobile.value) {
     ui.sidebarMobileOpen = false
+    console.log('🟢 handleNavClick - sidebar cerrado')
   }
 }
 
 async function logout() {
+  if (isMobile.value) {
+    ui.sidebarMobileOpen = false
+  }
   await auth.logout()
   router.push({ name: 'login' })
 }
@@ -195,11 +217,22 @@ async function logout() {
 // DETECTAR CAMBIO DE TAMAÑO
 // ============================================
 function handleResize() {
+  const wasMobile = isMobile.value
   isMobile.value = window.innerWidth <= 768
-  if (!isMobile.value) {
+  
+  // Si cambia de móvil a desktop, cerrar el overlay
+  if (wasMobile && !isMobile.value && ui.sidebarMobileOpen) {
     ui.sidebarMobileOpen = false
+    console.log('🟢 Cambio a desktop - sidebar cerrado')
   }
 }
+
+// ============================================
+// WATCHER PARA DEPURAR
+// ============================================
+watch(() => ui.sidebarMobileOpen, (newVal) => {
+  console.log('🟢 sidebarMobileOpen cambió a:', newVal)
+})
 
 // ============================================
 // LIFECYCLE
@@ -207,10 +240,18 @@ function handleResize() {
 onBeforeMount(() => {
   // ⭐ Cargar estado del sidebar ANTES de montar
   ui.loadSidebarState()
+  
+  // ⭐ FORZAR CIERRE EN MÓVIL AL CARGAR
+  if (window.innerWidth <= 768) {
+    ui.sidebarMobileOpen = false
+    console.log('🟢 onBeforeMount - Forzando cierre en móvil')
+  }
 })
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
+  console.log('🟢 Sidebar montado - isMobile:', isMobile.value)
+  console.log('🟢 Sidebar montado - sidebarMobileOpen:', ui.sidebarMobileOpen)
 })
 
 onUnmounted(() => {
@@ -219,11 +260,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* ============================================
-   BOOTSTRAP ICONS - COMENTADO (Usamos CDN en index.html)
-   ============================================ */
-/* @import 'bootstrap-icons/font/bootstrap-icons.css'; */
-
 /* ============================================
    SIDEBAR BASE
    ============================================ */
@@ -248,10 +284,9 @@ onUnmounted(() => {
 }
 
 /* ============================================
-   OVERLAY PARA MÓVIL
+   OVERLAY PARA MÓVIL - CORREGIDO FINAL
    ============================================ */
 .sidebar-overlay {
-  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -259,10 +294,26 @@ onUnmounted(() => {
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1040;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* Asegurar que el overlay sea clickeable */
+  pointer-events: auto !important;
 }
 
-.sidebar.mobile-open .sidebar-overlay {
-  display: block;
+/* En móvil, el sidebar siempre tiene pointer-events auto */
+@media (max-width: 768px) {
+  .sidebar {
+    pointer-events: auto !important;
+  }
+  
+  /* Cuando el sidebar está abierto, permitir clicks en el sidebar y el overlay */
+  .sidebar.mobile-open {
+    pointer-events: auto !important;
+  }
+  
+  .sidebar.mobile-open .sidebar-overlay {
+    display: block;
+  }
 }
 
 /* ============================================
@@ -512,6 +563,9 @@ onUnmounted(() => {
   position: relative;
   white-space: nowrap;
   overflow: hidden;
+  /* Asegurar que los items del menú sean clickeables */
+  pointer-events: auto !important;
+  z-index: 1060;
 }
 
 .nav-item:hover {
@@ -607,18 +661,22 @@ onUnmounted(() => {
 }
 
 /* ============================================
-   RESPONSIVE - MOBILE
+   RESPONSIVE - MOBILE - CORREGIDO FINAL
    ============================================ */
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
     width: 280px;
     border-radius: 0 12px 12px 0;
+    /* Asegurar que el sidebar reciba clicks */
+    pointer-events: none;
   }
 
   .sidebar.mobile-open {
     transform: translateX(0);
     box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
+    /* Cuando está abierto, recibe clicks */
+    pointer-events: auto !important;
   }
 
   .sidebar.collapsed {
@@ -658,8 +716,21 @@ onUnmounted(() => {
     font-size: 16px;
   }
 
+  /* El overlay solo aparece cuando el sidebar está abierto */
   .sidebar.mobile-open .sidebar-overlay {
     display: block;
+  }
+  
+  /* Asegurar que los items del menú sean clickeables */
+  .sidebar.mobile-open .nav-item {
+    pointer-events: auto !important;
+    z-index: 1060;
+  }
+  
+  /* Asegurar que el botón de cierre sea clickeable */
+  .sidebar.mobile-open .collapse-toggle {
+    pointer-events: auto !important;
+    z-index: 1060;
   }
 }
 
