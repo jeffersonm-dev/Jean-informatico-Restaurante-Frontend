@@ -202,21 +202,8 @@ import Swal from 'sweetalert2'
 import ProductoFormModal from './ProductoFormModal.vue'
 import ProductoImagenModal from './ProductoImagenModal.vue'
 
-// ============================================
-// CONSTANTES - DINÁMICAS
-// ============================================
-// ✅ Obtener la URL base del navegador automáticamente
-const BASE_URL = window.location.origin
-
-// URL para las peticiones API (usa /api)
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
-
-// URL para las imágenes (vacío = usar la misma base)
-const IMAGES_BASE_URL = import.meta.env.VITE_IMAGES_URL || BASE_URL
-
-console.log('🔧 BASE_URL:', BASE_URL)
-console.log('🔧 API_BASE_URL:', API_BASE_URL)
-console.log('🔧 IMAGES_BASE_URL:', IMAGES_BASE_URL)
+// ✅ IMPORTAR SOLO LA FUNCIÓN QUE NECESITAS
+import { getImagenUrl } from '@/services/images'
 
 // ============================================
 // STATE
@@ -267,65 +254,8 @@ const productosFiltrados = computed(() => {
 })
 
 // ============================================
-// MÉTODOS PARA IMÁGENES - DINÁMICO
+// MANEJO DE ERRORES DE IMÁGENES
 // ============================================
-const construirUrlImagen = (url) => {
-  if (!url) return null
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  
-  let cleanUrl = url
-  
-  // Limpiar wwwroot
-  if (cleanUrl.includes('wwwroot')) {
-    cleanUrl = cleanUrl.replace('wwwroot', '')
-  }
-  
-  // Eliminar /api/ si existe
-  if (cleanUrl.includes('/api/')) {
-    cleanUrl = cleanUrl.replace('/api/', '/')
-  }
-  if (cleanUrl.includes('api/')) {
-    cleanUrl = cleanUrl.replace('api/', '')
-  }
-  
-  // Asegurar que comience con /
-  if (!cleanUrl.startsWith('/')) {
-    cleanUrl = '/' + cleanUrl
-  }
-  
-  // Eliminar // dobles
-  cleanUrl = cleanUrl.replace(/\/\//g, '/')
-  
-  // ✅ Usar IMAGES_BASE_URL dinámico
-  const finalUrl = `${IMAGES_BASE_URL}${cleanUrl}`
-  console.log('🔍 Construyendo URL imagen:', { original: url, clean: cleanUrl, final: finalUrl })
-  return finalUrl
-}
-
-const getImagenUrl = (producto) => {
-  if (!producto) return null
-  
-  if (producto.imagen_principal_url) {
-    return construirUrlImagen(producto.imagen_principal_url)
-  }
-  
-  if (producto.imagenes && producto.imagenes.length > 0) {
-    const principal = producto.imagenes.find(img => img.es_principal === true) || producto.imagenes[0]
-    if (principal) {
-      const url = principal.url_imagen_completa || principal.url_imagen
-      return construirUrlImagen(url)
-    }
-  }
-  
-  if (producto.imagen_principal) {
-    return construirUrlImagen(producto.imagen_principal)
-  }
-  
-  return null
-}
-
 const handleImageError = (event) => {
   console.warn('❌ Error al cargar imagen:', event.target.src)
   event.target.style.display = 'none'
