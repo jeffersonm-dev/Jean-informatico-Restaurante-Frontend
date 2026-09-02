@@ -1,4 +1,3 @@
-# Dockerfile
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -11,6 +10,9 @@ RUN npm ci --legacy-peer-deps
 
 # Copiar el resto del código
 COPY . .
+
+# ✅ Eliminar la importación de bootstrap-icons del main.js (si existe)
+RUN sed -i '/bootstrap-icons/d' src/main.js || true
 
 # Construir la aplicación
 RUN npm run build

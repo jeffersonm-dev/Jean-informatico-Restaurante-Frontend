@@ -220,9 +220,9 @@ onUnmounted(() => {
 
 <style scoped>
 /* ============================================
-   IMPORTAR BOOTSTRAP ICONS
+   BOOTSTRAP ICONS - COMENTADO (Usamos CDN en index.html)
    ============================================ */
-@import 'bootstrap-icons/font/bootstrap-icons.css';
+/* @import 'bootstrap-icons/font/bootstrap-icons.css'; */
 
 /* ============================================
    SIDEBAR BASE

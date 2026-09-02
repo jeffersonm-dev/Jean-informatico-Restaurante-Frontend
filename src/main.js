@@ -10,9 +10,9 @@ import router from './router'
 import './assets/main.css'
 
 // ============================================
-// BOOTSTRAP ICONS - Para iconos profesionales
+// BOOTSTRAP ICONS - COMENTADO (usamos CDN en index.html)
 // ============================================
-import 'bootstrap-icons/font/bootstrap-icons.css'
+// import 'bootstrap-icons/font/bootstrap-icons.css'
 
 // ============================================
 // FONT AWESOME - Para iconos adicionales (opcional)

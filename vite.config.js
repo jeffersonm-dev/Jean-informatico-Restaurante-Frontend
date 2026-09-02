@@ -35,7 +35,7 @@ export default defineConfig({
         // Dividir el bundle en chunks para mejorar la carga
         manualChunks: {
           vendor: ['vue', 'vue-router', 'axios'],
-          ui: ['sweetalert2', 'bootstrap-icons']
+          ui: ['sweetalert2']  // ✅ Eliminar bootstrap-icons
         }
       }
     },
