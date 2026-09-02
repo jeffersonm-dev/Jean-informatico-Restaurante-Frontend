@@ -27,16 +27,29 @@
             </div>
             <div class="form-group">
               <label>Icono</label>
-              <div class="icon-select-wrapper">
-                <input 
-                  type="text" 
-                  v-model="form.icono" 
-                  placeholder="fa-coffee, bi bi-cup-hot"
-                />
-                <div class="icon-preview" v-if="form.icono">
-                  <i :class="form.icono"></i>
-                </div>
+              <div class="icon-selector">
+                <button 
+                  type="button"
+                  class="icon-option"
+                  :class="{ active: form.icono === icon.value }"
+                  v-for="icon in iconosDisponibles"
+                  :key="icon.value"
+                  @click="form.icono = icon.value"
+                  :title="icon.label"
+                >
+                  <i :class="icon.value"></i>
+                </button>
+                <button 
+                  type="button"
+                  class="icon-option clear-icon"
+                  :class="{ active: !form.icono }"
+                  @click="form.icono = ''"
+                  title="Sin icono"
+                >
+                  <i class="bi bi-x-circle"></i>
+                </button>
               </div>
+              <small class="helper-text">Selecciona un icono para la categoría</small>
             </div>
           </div>
 
@@ -62,15 +75,20 @@
             <div class="form-group">
               <label>Categoría Padre</label>
               <select v-model="form.padre_id">
-                <option :value="0">Ninguna (Categoría Padre)</option>
+                <option :value="0">📁 Ninguna (Categoría Principal)</option>
                 <option 
                   v-for="cat in categoriasDisponibles" 
                   :key="cat.id" 
                   :value="cat.id"
+                  :disabled="editando && cat.id === form.id"
                 >
-                  {{ cat.nombre }}
+                  {{ obtenerIndentacion(cat.id) }} {{ cat.nombre }}
+                  <span v-if="cat.padre_id !== 0" style="color: #999; font-size: 12px;">
+                    (Subcategoría)
+                  </span>
                 </option>
               </select>
+              <small class="helper-text">Selecciona una categoría padre o deja "Ninguna" para crear una categoría principal</small>
             </div>
           </div>
 
@@ -138,10 +156,83 @@ const props = defineProps({
   sedes: {
     type: Array,
     default: () => []
+  },
+  categorias: {
+    type: Array,
+    default: () => []
   }
 })
 
 const emit = defineEmits(['close', 'save'])
+
+// ============================================
+// ICONOS DISPONIBLES (Bootstrap Icons)
+// ============================================
+const iconosDisponibles = [
+  { value: 'bi bi-tag', label: 'Etiqueta' },
+  { value: 'bi bi-tags', label: 'Etiquetas' },
+  { value: 'bi bi-cup-hot', label: 'Bebida caliente' },
+  { value: 'bi bi-cup-straw', label: 'Bebida fría' },
+  { value: 'bi bi-egg-fried', label: 'Huevo' },
+  { value: 'bi bi-basket', label: 'Canasta' },
+  { value: 'bi bi-bag', label: 'Bolsa' },
+  { value: 'bi bi-box', label: 'Caja' },
+  { value: 'bi bi-box-seam', label: 'Caja sellada' },
+  { value: 'bi bi-cake', label: 'Pastel' },
+  { value: 'bi bi-cupcake', label: 'Cupcake' },
+  { value: 'bi bi-droplet', label: 'Gota' },
+  { value: 'bi bi-flower1', label: 'Flor' },
+  { value: 'bi bi-flower2', label: 'Flor 2' },
+  { value: 'bi bi-flower3', label: 'Flor 3' },
+  { value: 'bi bi-fruit', label: 'Fruta' },
+  { value: 'bi bi-gem', label: 'Gema' },
+  { value: 'bi bi-gift', label: 'Regalo' },
+  { value: 'bi bi-handbag', label: 'Bolso' },
+  { value: 'bi bi-house', label: 'Casa' },
+  { value: 'bi bi-ice-cream', label: 'Helado' },
+  { value: 'bi bi-key', label: 'Llave' },
+  { value: 'bi bi-lightbulb', label: 'Bombilla' },
+  { value: 'bi bi-megaphone', label: 'Megáfono' },
+  { value: 'bi bi-music-note', label: 'Nota musical' },
+  { value: 'bi bi-palette', label: 'Paleta' },
+  { value: 'bi bi-pencil', label: 'Lápiz' },
+  { value: 'bi bi-person', label: 'Persona' },
+  { value: 'bi bi-phone', label: 'Teléfono' },
+  { value: 'bi bi-pizza', label: 'Pizza' },
+  { value: 'bi bi-rocket', label: 'Cohete' },
+  { value: 'bi bi-scissors', label: 'Tijeras' },
+  { value: 'bi bi-shop', label: 'Tienda' },
+  { value: 'bi bi-star', label: 'Estrella' },
+  { value: 'bi bi-suit-heart', label: 'Corazón' },
+  { value: 'bi bi-trophy', label: 'Trofeo' },
+  { value: 'bi bi-truck', label: 'Camión' },
+  { value: 'bi bi-umbrella', label: 'Paraguas' },
+  { value: 'bi bi-wallet', label: 'Cartera' },
+  { value: 'bi bi-watch', label: 'Reloj' },
+  { value: 'bi bi-wifi', label: 'WiFi' },
+  { value: 'bi bi-bicycle', label: 'Bicicleta' },
+  { value: 'bi bi-bank', label: 'Banco' },
+  { value: 'bi bi-building', label: 'Edificio' },
+  { value: 'bi bi-tree', label: 'Árbol' },
+  { value: 'bi bi-sun', label: 'Sol' },
+  { value: 'bi bi-moon', label: 'Luna' },
+  { value: 'bi bi-cloud', label: 'Nube' },
+  { value: 'bi bi-rainbow', label: 'Arcoíris' },
+  { value: 'bi bi-bug', label: 'Bicho' },
+  { value: 'bi bi-database', label: 'Base de datos' },
+  { value: 'bi bi-globe', label: 'Globo' },
+  { value: 'bi bi-map', label: 'Mapa' },
+  { value: 'bi bi-compass', label: 'Brújula' },
+  { value: 'bi bi-camera', label: 'Cámara' },
+  { value: 'bi bi-video', label: 'Video' },
+  { value: 'bi bi-mic', label: 'Micrófono' },
+  { value: 'bi bi-headphones', label: 'Audífonos' },
+  { value: 'bi bi-laptop', label: 'Laptop' },
+  { value: 'bi bi-printer', label: 'Impresora' },
+  { value: 'bi bi-book', label: 'Libro' },
+  { value: 'bi bi-journal', label: 'Revista' },
+  { value: 'bi bi-newspaper', label: 'Periódico' }
+]
 
 // ============================================
 // STATE
@@ -156,6 +247,7 @@ const form = ref({
   nombre: '',
   descripcion: '',
   icono: '',
+  imagen_url: '',
   orden: 0,
   padre_id: 0,
   activo: true,
@@ -166,44 +258,49 @@ const form = ref({
 // COMPUTED
 // ============================================
 const categoriasDisponibles = computed(() => {
-  // Si estamos editando, excluir la categoría actual para evitar auto-referencia
+  let disponibles = props.categorias
+  
   if (props.editando && props.categoria) {
-    return props.sedes.filter(c => c.id !== props.categoria.id)
+    const idsHijas = obtenerIdsSubcategorias(props.categoria.id, props.categorias)
+    disponibles = disponibles.filter(c => 
+      c.id !== props.categoria.id && !idsHijas.includes(c.id)
+    )
   }
-  return props.sedes
-})
-
-// ============================================
-// WATCHERS
-// ============================================
-watch(() => props.show, (val) => {
-  if (val) {
-    if (props.editando && props.categoria) {
-      form.value = {
-        id: props.categoria.id,
-        nombre: props.categoria.nombre || '',
-        descripcion: props.categoria.descripcion || '',
-        icono: props.categoria.icono || '',
-        orden: props.categoria.orden || 0,
-        padre_id: props.categoria.padre_id || 0,
-        activo: props.categoria.activo !== false,
-        sede_id: props.categoria.sede_id || ''
-      }
-    } else {
-      resetForm()
-    }
-    errors.value = { nombre: '', sede_id: '' }
-  }
+  
+  return disponibles
 })
 
 // ============================================
 // MÉTODOS
 // ============================================
+// Función para obtener la indentación visual sin usar HTML dentro de option
+const obtenerIndentacion = (categoriaId) => {
+  let nivel = 0
+  let actual = props.categorias.find(c => c.id === categoriaId)
+  while (actual && actual.padre_id !== 0) {
+    nivel++
+    actual = props.categorias.find(c => c.id === actual.padre_id)
+  }
+  // Usar guiones y emojis para representar jerarquía
+  return '—'.repeat(nivel) + (nivel > 0 ? ' ' : '')
+}
+
+const obtenerIdsSubcategorias = (padreId, categoriasList) => {
+  const ids = []
+  const hijas = categoriasList.filter(c => c.padre_id === padreId)
+  hijas.forEach(hija => {
+    ids.push(hija.id)
+    ids.push(...obtenerIdsSubcategorias(hija.id, categoriasList))
+  })
+  return ids
+}
+
 const resetForm = () => {
   form.value = {
     nombre: '',
     descripcion: '',
     icono: '',
+    imagen_url: '',
     orden: 0,
     padre_id: 0,
     activo: true,
@@ -248,10 +345,11 @@ const guardar = async () => {
       nombre: form.value.nombre,
       descripcion: form.value.descripcion || null,
       icono: form.value.icono || null,
+      imagen_url: form.value.imagen_url || null,
       orden: form.value.orden || 0,
       padre_id: form.value.padre_id || 0,
       activo: form.value.activo,
-      sede_id: form.value.sede_id
+      sede_id: Number(form.value.sede_id)
     }
 
     console.log('📤 Enviando datos:', dataToSend)
@@ -305,6 +403,30 @@ const guardar = async () => {
 const close = () => {
   emit('close')
 }
+
+// ============================================
+// WATCHERS
+// ============================================
+watch(() => props.show, (val) => {
+  if (val) {
+    if (props.editando && props.categoria) {
+      form.value = {
+        id: props.categoria.id,
+        nombre: props.categoria.nombre || '',
+        descripcion: props.categoria.descripcion || '',
+        icono: props.categoria.icono || '',
+        imagen_url: props.categoria.imagen_url || '',
+        orden: props.categoria.orden || 0,
+        padre_id: props.categoria.padre_id || 0,
+        activo: props.categoria.activo !== false,
+        sede_id: props.categoria.sede_id || ''
+      }
+    } else {
+      resetForm()
+    }
+    errors.value = { nombre: '', sede_id: '' }
+  }
+})
 </script>
 
 <style scoped>
@@ -335,7 +457,7 @@ const close = () => {
 .modal-box {
   background: #fff;
   border-radius: 20px;
-  max-width: 600px;
+  max-width: 650px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
@@ -363,6 +485,11 @@ const close = () => {
   justify-content: space-between;
   padding: 20px 24px;
   border-bottom: 1px solid #f3f4f6;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+  border-radius: 20px 20px 0 0;
 }
 
 .modal-title {
@@ -406,6 +533,10 @@ const close = () => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  border-radius: 0 0 20px 20px;
 }
 
 /* ============================================
@@ -468,29 +599,92 @@ const close = () => {
   margin-top: 2px;
 }
 
-.icon-select-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.helper-text {
+  color: #6b7280;
+  font-size: 11px;
+  margin-top: 2px;
 }
 
-.icon-select-wrapper input {
-  flex: 1;
+/* ============================================
+   ICON SELECTOR VISUAL
+   ============================================ */
+.icon-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 6px;
+  padding: 8px;
+  background: #f8f6f4;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  max-height: 150px;
+  overflow-y: auto;
 }
 
-.icon-preview {
+.icon-option {
   width: 40px;
   height: 40px;
-  background: #f3f4f6;
+  border: 2px solid transparent;
   border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  color: #E85D3A;
-  flex-shrink: 0;
+  color: #4b5563;
+  transition: all 0.2s ease;
+  padding: 0;
 }
 
+.icon-option:hover {
+  border-color: #d1d5db;
+  transform: scale(1.05);
+  background: #f3f4f6;
+}
+
+.icon-option.active {
+  border-color: #E85D3A;
+  background: rgba(232, 93, 58, 0.08);
+  color: #E85D3A;
+  box-shadow: 0 0 0 3px rgba(232, 93, 58, 0.15);
+}
+
+.icon-option.clear-icon {
+  color: #9ca3af;
+}
+
+.icon-option.clear-icon:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.icon-option.clear-icon.active {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+/* Scroll personalizado para el selector de iconos */
+.icon-selector::-webkit-scrollbar {
+  width: 4px;
+}
+
+.icon-selector::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.icon-selector::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.icon-selector::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* ============================================
+   SWITCH
+   ============================================ */
 .switch-group {
   justify-content: flex-start;
 }
@@ -627,6 +821,17 @@ const close = () => {
   .form-row {
     grid-template-columns: 1fr;
   }
+
+  .icon-selector {
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+    max-height: 120px;
+  }
+
+  .icon-option {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -642,6 +847,18 @@ const close = () => {
   .modal-footer button {
     width: 100%;
     justify-content: center;
+  }
+
+  .icon-selector {
+    grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+    max-height: 100px;
+    padding: 6px;
+  }
+
+  .icon-option {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
   }
 }
 </style>

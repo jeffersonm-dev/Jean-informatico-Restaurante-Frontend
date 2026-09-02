@@ -78,7 +78,7 @@
         </button>
       </div>
 
-      <!-- Categorías Padre -->
+      <!-- Categorías -->
       <div 
         v-for="categoria in categoriasFiltradas" 
         :key="categoria.id" 
@@ -89,7 +89,8 @@
           <div class="card-status">
             <span class="status-dot" :class="categoria.activo ? 'active' : 'inactive'"></span>
             <span class="status-label">{{ categoria.activo ? 'Activo' : 'Inactivo' }}</span>
-            <span v-if="categoria.nivel === 'Padre'" class="badge-padre">Padre</span>
+            <span v-if="categoria.padre_id === 0" class="badge-padre">Principal</span>
+            <span v-else class="badge-sub">Subcategoría</span>
           </div>
           <div class="card-actions">
             <button class="icon-btn edit" @click="abrirModalEditar(categoria)" title="Editar">
@@ -121,9 +122,9 @@
               <i class="bi bi-box"></i>
               {{ categoria.total_productos || 0 }} productos
             </span>
-            <span class="stat" v-if="categoria.total_subcategorias !== undefined">
+            <span class="stat" v-if="categoria.subcategorias_count !== undefined">
               <i class="bi bi-diagram-2"></i>
-              {{ categoria.total_subcategorias || 0 }} subcategorías
+              {{ categoria.subcategorias_count || 0 }} subcategorías
             </span>
           </div>
         </div>
@@ -132,7 +133,7 @@
           <span class="card-id">ID: #{{ categoria.id }}</span>
           <span class="card-sede" v-if="categoria.sede_id">
             <i class="bi bi-building"></i>
-            Sede: {{ categoria.sede_id }}
+            Sede: {{ obtenerNombreSede(categoria.sede_id) }}
           </span>
           <span class="card-date">{{ formatearFechaCorta(categoria.fecha_creacion) }}</span>
         </div>
@@ -140,13 +141,14 @@
     </div>
 
     <!-- ============================================
-         MODAL NUEVO / EDITAR (usando componente)
+         MODAL NUEVO / EDITAR
     ============================================ -->
     <CategoriaFormModal 
       :show="mostrarModal"
       :editando="isEditando"
       :categoria="categoriaSeleccionada"
       :sedes="sedes"
+      :categorias="categorias"
       @close="cerrarModal"
       @save="onSave"
     />
@@ -232,6 +234,11 @@ const cargarSedes = async () => {
   }
 }
 
+const obtenerNombreSede = (sedeId) => {
+  const sede = sedes.value.find(s => s.id === sedeId)
+  return sede ? sede.nombre : 'Sin sede'
+}
+
 const filtrarCategorias = () => {}
 
 const limpiarFiltros = () => {
@@ -265,16 +272,23 @@ const onSave = async () => {
 const verCategoria = (id) => {
   const categoria = categorias.value.find(c => c.id === id)
   if (categoria) {
+    const nombrePadre = categoria.padre_id 
+      ? categorias.value.find(c => c.id === categoria.padre_id)?.nombre || 'Ninguna'
+      : 'Ninguna (Principal)'
+    
     Swal.fire({
       title: categoria.nombre,
       html: `
         <div style="text-align: left;">
           <p><strong>ID:</strong> #${categoria.id}</p>
           <p><strong>Descripción:</strong> ${categoria.descripcion || 'Sin descripción'}</p>
-          <p><strong>Icono:</strong> <i :class="'${categoria.icono || 'bi bi-tag'}'"></i></p>
+          <p><strong>Icono:</strong> <i class="${categoria.icono || 'bi bi-tag'}"></i> ${categoria.icono || 'Ninguno'}</p>
           <p><strong>Estado:</strong> ${categoria.activo ? '✅ Activo' : '❌ Inactivo'}</p>
+          <p><strong>Categoría Padre:</strong> ${nombrePadre}</p>
+          <p><strong>Orden:</strong> ${categoria.orden || 0}</p>
           <p><strong>Productos:</strong> ${categoria.total_productos || 0}</p>
-          <p><strong>Subcategorías:</strong> ${categoria.total_subcategorias || 0}</p>
+          <p><strong>Subcategorías:</strong> ${categoria.subcategorias_count || 0}</p>
+          <p><strong>Sede:</strong> ${obtenerNombreSede(categoria.sede_id)}</p>
           <p><strong>Fecha creación:</strong> ${formatearFecha(categoria.fecha_creacion)}</p>
         </div>
       `,
@@ -693,6 +707,15 @@ onMounted(() => {
 .badge-padre {
   background: #dbeafe;
   color: #2563eb;
+  font-size: 10px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.badge-sub {
+  background: #fef3c7;
+  color: #d97706;
   font-size: 10px;
   padding: 2px 10px;
   border-radius: 12px;
